@@ -17,7 +17,6 @@
 	define('KEYWORD_SYSCALL6' ,'syscall6');
 
 	define('OP_FUNCTION', iota(true));
-	define('OP_IN_BLOCK', iota());
 	define('OP_RETURN', iota());
 	define('OP_PUSH_INTEGER', iota());
 	define('OP_CALL', iota());
@@ -52,7 +51,10 @@
 		}
 		$tokens = getTokens($filepath);
 		$inter_repr = getInterRepr($tokens);
+		generate($inter_repr);
 
+		$nasm = shell_exec("nasm -f elf64 output.asm -o output.o");
+		$ld = shell_exec("ld -e _start -o output output.o");
 	}
 
 	/**
@@ -123,13 +125,9 @@
 		$in_function = false;
 		$function_name = "";
 		$function_type_stack = array();
-
-		
-
 		$block_count = 0;
 
 		foreach ($tokens as $token) {
-			echo $token->word . "\n";
 			$inter_repr = null;
 			switch ($token->word) {
 				case KEYWORD_FUNCTION:
@@ -144,9 +142,9 @@
 					continue 2;
 					break;
 				case KEYWORD_IN_BLOCK:
+					if ($function_name == "main") $function_name = "_start";
 					$inter_repr = new InterRepr(OP_FUNCTION, new FunctionDef($function_name, $function_type_stack));
 					array_push($functions, $function_name);
-					$function_name = "";
 					$function_type_stack = array();
 					$in_function_definition = false;
 					$in_function = true;
@@ -158,7 +156,14 @@
 						exit(1);
 					}
 					if ($block_count == 1) {
-						$inter_repr = new InterRepr(OP_RETURN);
+						if ($function_name === "_start") {
+							array_push($inter_repr_comp, new InterRepr(OP_PUSH_INTEGER, 0));
+							array_push($inter_repr_comp, new InterRepr(OP_PUSH_INTEGER, 60));
+							$inter_repr = new InterRepr(OP_SYSCALL1);
+						} else {
+							$inter_repr = new InterRepr(OP_RETURN);
+							$function_name = "";
+						}
 						break;
 					} else {
 						echo "[TODO]: Closing other than function blocks is not implemented yet";
@@ -193,6 +198,9 @@
 									exit(1);
 								} else if (in_array($token->word, $functions, false)) {
 									echo "[COMPILATION ERROR]: Redefinition of functions is not allowed\n" . $token->getTokenInformation() . "\n";
+									exit(1);
+								} else if ($token->word === "_start") {
+									echo "[COMPILATION ERROR]: The name `_start` is forbidden for functions\n" . $token->getTokenInformation . "\n";
 									exit(1);
 								}
 								$function_name_defined = true;
@@ -274,7 +282,39 @@
 			$this->type_stack = $type_stack;
 		}
 	}
-		
+
+	function generate($inter_repr) {
+		$current_function = null;
+		$file = fopen("output.asm", "w") or die ("[ERROR]: Unable to open the output file\n");
+		fwrite($file, "BITS 64\n");
+		fwrite($file, "section .text\n");
+		fwrite($file, "global _start\n");
+		foreach ($inter_repr as $operation) {
+			switch ($operation->op_code) {
+				case OP_FUNCTION:
+					fwrite($file, $operation->value->name . ":\n");
+					break;
+				case OP_RETURN:
+					fwrite($file, "ret\n");
+					break;
+				case OP_PUSH_INTEGER:
+					fwrite($file, "mov rax, " . $operation->value . "\n");
+					fwrite($file, "push rax\n");
+					break;
+				case OP_SYSCALL0:
+					fwrite($file, "pop rax\n");
+					fwrite($file, "syscall\n");
+					break;
+				case OP_SYSCALL1:
+					fwrite($file, "pop rax\n");
+					fwrite($file, "pop rdi\n");
+					fwrite($file, "syscall\n");
+					break;
+			} 
+		}
+		fclose($file);
+	}
+
 
 	/**
 	* Returns true if the character specified in $c is a whitespace character, and false otherwise
