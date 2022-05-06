@@ -15,29 +15,69 @@
 		usage($argv[0]);
 		exit(1);
 	}
-	$words = getWords($filepath);
+	$tokens = getTokens($filepath);
 
-	foreach ($words as $w) {
-		echo "|" . $w . "|\n";
+
+	foreach ($tokens as $t) {
+		if ($t->word == "") continue;
+		
+		echo $t->getTokenInformation() . "\n";
 	}
 
-	
 	exit(69);
 
-	function getWords($filepath) {
+	function getTokens($filepath) {
 		$ret = array();
 		$file = fopen($filepath, "r") or die ("ERROR: Unable to open the file " . $filepath);
 		$code = fread($file, filesize($filepath));
 		$lines = explode("\n", $code);
+		$line_place = 0;
 		foreach ($lines as $line) {
-			$words = explode(" ", $line);
-			foreach ($words as $word) {
-				$word = trim($word);
-				array_push($ret, $word);
+			$line_place++;
+			$char_place = 0;
+			$chars = str_split($line);
+			$current_word = "";
+			foreach ($chars as $c) {
+				$char_place++;
+				if (!isWhitespace($c)) {
+					$current_word = $current_word . $c;
+				} else {
+					if ($current_word !== "") {
+						$token = new Token($current_word, $line_place, $char_place - strlen($current_word), $filepath);
+						array_push($ret, $token);
+					}
+					$current_word = "";
+				}
 			}
+			$char_place++;
+			$token = new Token($current_word, $line_place, $char_place - strlen($current_word), $filepath);
+			array_push($ret, $token);
+									
 		}
 		fclose($file);
 		return $ret;
+	}
+
+	class Token {
+		public $word;
+		public $row;
+		public $col;
+		public $filename;
+
+		function __construct($word, $row, $col, $filename) {
+			$this->word = $word;
+			$this->row = $row;
+			$this->col = $col;
+			$this->filename = $filename;
+		}
+
+		function getTokenInformation() {
+			return $this->filename . ":" . $this->row . ":" . $this->col . " [" . $this->word . "]";
+		}
+	}
+
+	function isWhitespace($c) {
+		return ($c === ' ' || $c === "\n" || $c === "\t" || $c === '\r');
 	}
 
 	function endsWith($str, $end) {
