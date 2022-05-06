@@ -67,12 +67,24 @@
 			usage($argv[0]);
 			exit(1);
 		}
+		$basename = basename($filepath, ".kf");
 		$tokens = getTokens($filepath);
 		$inter_repr = getInterRepr($tokens);
 		generate($inter_repr);
 
 		$nasm = shell_exec("nasm -f elf64 output.asm -o output.o");
 		$ld = shell_exec("ld -e _start -o output output.o");
+		rename("output", $basename);
+		unlink("output.o");
+		if ($autorun) {
+			$exit_code = 0;
+			$output = array();
+			exec("./" . $basename, $output, $exit_code);
+			foreach ($output as $line) {
+				echo $line . "\n";
+			}
+			exit($exit_code);
+		}
 	}
 
 	/**
