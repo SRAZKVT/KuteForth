@@ -15,6 +15,15 @@
 	define('KEYWORD_SYSCALL4' ,'syscall4');
 	define('KEYWORD_SYSCALL5' ,'syscall5');
 	define('KEYWORD_SYSCALL6' ,'syscall6');
+	define('KEYWORD_PLUS', 'plus');
+	define('KEYWORD_MINUS', 'minus');
+	define('KEYWORD_MULT', 'mult');
+	define('KEYWORD_DIVMOD', 'divmod');
+	define('KEYWORD_DROP', 'drop');
+	define('KEYWORD_DUP', 'dup');
+	define('KEYWORD_SWAP','swap');
+	define('KEYWORD_ROT', 'rot');
+	define('KEYWORD_OVER', 'over');
 
 	define('OP_FUNCTION', iota(true));
 	define('OP_RETURN', iota());
@@ -26,7 +35,16 @@
 	define('OP_SYSCALL3', iota());
 	define('OP_SYSCALL4', iota());
 	define('OP_SYSCALL5', iota());
-
+	define('OP_SYSCALL6', iota());
+	define('OP_PLUS', iota());
+	define('OP_MINUS', iota());
+	define('OP_MULT', iota());
+	define('OP_DIVMOD', iota());
+	define('OP_DROP', iota());
+	define('OP_DUP', iota());
+	define('OP_SWAP', iota());
+	define('OP_ROT', iota());
+	define('OP_OVER', iota());
 
 
 	main($argv);
@@ -164,16 +182,61 @@
 							$inter_repr = new InterRepr(OP_RETURN);
 							$function_name = "";
 						}
+						$in_function = false;
+						$block_count--;
+						$function_name_defined = false;
 						break;
 					} else {
 						echo "[TODO]: Closing other than function blocks is not implemented yet";
 						exit(1);
 					}
 				case KEYWORD_SYSCALL0:
-					echo "Keyword syscall0 is not implemented yet\n";
-					exit(1);
+					$inter_repr = new InterRepr(OP_SYSCALL0);
+					break;
 				case KEYWORD_SYSCALL1:
 					$inter_repr = new InterRepr(OP_SYSCALL1);
+					break;
+				case KEYWORD_SYSCALL2:
+					$inter_repr = new InterRepr(OP_SYSCALL2);
+					break;
+				case KEYWORD_SYSCALL3:
+					$inter_repr = new InterRepr(OP_SYSCALL3);
+					break;
+				case KEYWORD_SYSCALL4:
+					$inter_repr = new InterRepr(OP_SYSCALL4);
+					break;
+				case KEYWORD_SYSCALL5:
+					$inter_repr = new InterRepr(OP_SYSCALL5);
+					break;
+				case KEYWORD_SYSCALL6:
+					$inter_repr = new InterRepr(OP_SYSCALL6);
+					break;
+				case KEYWORD_PLUS:
+					$inter_repr = new InterRepr(OP_PLUS);
+					break;
+				case KEYWORD_MINUS:
+					$inter_repr = new InterRepr(OP_MINUS);
+					break;
+				case KEYWORD_MULT:
+					$inter_repr = new InterRepr(OP_MULT);
+					break;
+				case KEYWORD_DIVMOD:
+					$inter_repr = new InterRepr(OP_DIVMOD);
+					break;
+				case KEYWORD_DROP:
+					$inter_repr = new InterRepr(OP_DROP);
+					break;
+				case KEYWORD_DUP:
+					$inter_repr = new InterRepr(OP_DUP);
+					break;
+				case KEYWORD_SWAP:
+					$inter_repr = new InterRepr(OP_SWAP);
+					break;
+				case KEYWORD_ROT:
+					$inter_repr = new InterRepr(OP_ROT);
+					break;
+				case KEYWORD_OVER:
+					$inter_repr = new InterRepr(OP_OVER);
 					break;
 				default:
 					if (isAnInt($token->word)) {
@@ -217,12 +280,14 @@
 							}
 						} else if ($in_function) {
 							if(in_array($token->word, $functions, false)) {
-								$inter_repr = new InterRepr(OP_PUSH_INTEGER, $value);
+								$inter_repr = new InterRepr(OP_CALL, $token->word);
 							} else {
-								echo "[COMPILATION ERROR]: Uknown word\n" . $token->getTokenInformation() . "\n";
+								echo "[COMPILATION ERROR]: Unknown word\n" . $token->getTokenInformation() . "\n";
+								exit(1);
 							}
 						} else {
 							echo "[COMPILATION ERROR]: Words are not allowed outside of blocks" . $token->getTokenInformation() . "\n";
+							exit(1);
 						}
 					}
 
@@ -292,23 +357,140 @@
 		foreach ($inter_repr as $operation) {
 			switch ($operation->op_code) {
 				case OP_FUNCTION:
-					fwrite($file, $operation->value->name . ":\n");
+					fwrite($file, "\t;; OP_FUNCTION\n");
+					fwrite($file, "\t" . $operation->value->name . ":\n");
 					break;
 				case OP_RETURN:
-					fwrite($file, "ret\n");
+					fwrite($file, "\t;; OP_RETURN\n");
+					fwrite($file, "\tret\n");
 					break;
 				case OP_PUSH_INTEGER:
-					fwrite($file, "mov rax, " . $operation->value . "\n");
-					fwrite($file, "push rax\n");
+					fwrite($file, "\t;; OP_PUSH_INTEGER\n");
+					fwrite($file, "\tmov rax, " . $operation->value . "\n");
+					fwrite($file, "\tpush rax\n");
+					break;
+				case OP_CALL:
+					fwrite($file, "\t;; OP_CALL\n");
+					fwrite($file, "\tcall " . $operation->value . "\n");
 					break;
 				case OP_SYSCALL0:
-					fwrite($file, "pop rax\n");
-					fwrite($file, "syscall\n");
+					fwrite($file, "\t;; OP_SYSCALL0\n");
+					fwrite($file, "\tpop rax\n");
+					fwrite($file, "\tsyscall\n");
 					break;
 				case OP_SYSCALL1:
-					fwrite($file, "pop rax\n");
-					fwrite($file, "pop rdi\n");
-					fwrite($file, "syscall\n");
+					fwrite($file, "\t;; OP_SYSCALL1\n");
+					fwrite($file, "\tpop rax\n");
+					fwrite($file, "\tpop rdi\n");
+					fwrite($file, "\tsyscall\n");
+					break;
+				case OP_SYSCALL2:
+					fwrite($file, "\t;; OP_SYSCALL2\n");
+					fwrite($file, "\tpop rax\n");
+					fwrite($file, "\tpop rdi\n");
+					fwrite($file, "\tpop rsi\n");
+					fwrite($file, "\tsyscall\n");
+					break;
+				case OP_SYSCALL3;
+					fwrite($file, "\t;; OP_SYSCALL3\n");
+					fwrite($file, "\tpop rax\n");
+					fwrite($file, "\tpop rdi\n");
+					fwrite($file, "\tpop rsi\n");
+					fwrite($file, "\tpop rdx\n");
+					fwrite($file, "\tsyscall\n");
+					break;
+				case OP_SYSCALL4:
+					fwrite($file, "\t;; OP_SYSCALL4\n");
+					fwrite($file, "\tpop rax\n");
+					fwrite($file, "\tpop rdi\n");
+					fwrite($file, "\tpop rsi\n");
+					fwrite($file, "\tpop rdx\n");
+					fwrite($file, "\tpop r10\n");
+					fwrite($file, "\tsyscall\n");
+					break;
+				case OP_SYSCALL5:
+					fwrite($file, "\t;; OP_SYSCALL5\n");
+					fwrite($file, "\tpop rax\n");
+					fwrite($file, "\tpop rdi\n");
+					fwrite($file, "\tpop rsi\n");
+					fwrite($file, "\tpop rdx\n");
+					fwrite($file, "\tpop r10\n");
+					fwrite($file, "\tpop r8\n");
+					fwrite($file, "\tsyscall\n");
+					break;
+				case OP_SYSCALL6:
+					fwrite($file, "\t;; OP_SYSCALL6\n");
+					fwrite($file, "\tpop rax\n");
+					fwrite($file, "\tpop rdi\n");
+					fwrite($file, "\tpop rsi\n");
+					fwrite($file, "\tpop rdx\n");
+					fwrite($file, "\tpop r10\n");
+					fwrite($file, "\tpop r8\n");
+					fwrite($file, "\tpop r9\n");
+					fwrite($file, "\tsyscall\n");
+					break;
+				case OP_PLUS:
+					fwrite($file, "\t;; OP_PLUS\n");
+					fwrite($file, "\tpop rdi\n");
+					fwrite($file, "\tpop rax\n");
+					fwrite($file, "\tadd rax, rdi\n");
+					fwrite($file, "\tpush rax\n");
+					break;
+				case OP_MINUS:
+					fwrite($file, "\t;; OP_MINUS\n");
+					fwrite($file, "\tpop rdi\n");
+					fwrite($file, "\tpop rax\n");
+					fwrite($file, "\tsub rax, rdi\n");
+					fwrite($file, "\tpush rax\n");
+					break;
+				case OP_MULT:
+					fwrite($file, "\t;; OP_MULT\n");
+					fwrite($file, "\tpop rdi\n");
+					fwrite($file, "\tpop rax\n");
+					fwrite($file, "\tmul rdi\n");
+					fwrite($file, "\tpush rax\n");
+					break;
+				case OP_DIVMOD:
+					fwrite($file, "\t;; OP_DIVMOD\n");
+					fwrite($file, "\tpop rdi\n");
+					fwrite($file, "\tpop rax\n");
+					fwrite($file, "\tdiv rdi\n");
+					fwrite($file, "\tpush rdi\n");
+					fwrite($file, "\tpush rax\n");
+					break;
+				case OP_DROP:
+					fwrite($file, "\t;; OP_DROP\n");
+					fwrite($file, "\tpop rax\n");
+					break;
+				case OP_DUP:
+					fwrite($file, "\t;; OP_DUP\n");
+					fwrite($file, "\tpop rax\n");
+					fwrite($file, "\tpush rax\n");
+					fwrite($file, "\tpush rax\n");
+					break;
+				case OP_SWAP:
+					fwrite($file, "\t;; OP_SWAP\n");
+					fwrite($file, "\tpop rax\n");
+					fwrite($file, "\tpop rdi\n");
+					fwrite($file, "\tpush rax\n");
+					fwrite($file, "\tpush rdi\n");
+					break;
+				case OP_ROT:
+					fwrite($file, "\t;; OP_ROT\n");
+					fwrite($file, "\tpop rax\n");
+					fwrite($file, "\tpop rdi\n");
+					fwrite($file, "\tpop rsi\n");
+					fwrite($file, "\tpush rdi\n");
+					fwrite($file, "\tpush rax\n");
+					fwrite($file, "\tpush rsi\n");
+					break;
+				case OP_OVER:
+					fwrite($file, "\t;; OP_OVER\n");
+					fwrite($file, "\tpop rax\n");
+					fwrite($file, "\tpop rdi\n");
+					fwrite($file, "\tpush rdi\n");
+					fwrite($file, "\tpush rax\n");
+					fwrite($file, "\tpush rdi\n");
 					break;
 			} 
 		}
