@@ -3,7 +3,7 @@
 	$iota = 0;
 	$functions = array();
 	$constants = array(); // Constants are not implemented yet
-	$types = array();
+	$types = array("int", "void");
 
 	define('KEYWORD_FUNCTION' ,'func');
 	define('KEYWORD_IN_BLOCK' ,'in');
@@ -98,6 +98,7 @@
 		$lines = explode("\n", $code);
 		$line_place = 0;
 		foreach ($lines as $line) {
+			$prev_slash = false;
 			$line_place++;
 			$char_place = 0;
 			$chars = str_split($line);
@@ -109,7 +110,7 @@
 						continue 2;
 					}
 					$prev_slash = true;
-				}
+				} else $prev_slash = false;
 				if (!isWhitespace($c)) {
 					$current_word = $current_word . $c;
 				} else {
@@ -157,12 +158,17 @@
 		
 		$inter_repr_comp = array();
 
+		$implemented_functions = array();
+		$in_function_def_in = false;
 		$in_function_definition = false;
 		$function_name_defined = false;
 		$in_function = false;
 		$function_name = "";
-		$function_type_stack = array();
+		$function_type_stack_in = array();
+		$function_type_stack_out = array();
 		$block_count = 0;
+
+		$type_stack = array();
 
 		foreach ($tokens as $token) {
 			$inter_repr = null;
@@ -176,16 +182,54 @@
 						exit(1);
 					}
 					$in_function_definition = true;
+					$in_function_def_in = true;
+					$block_count++;
 					continue 2;
 					break;
 				case KEYWORD_IN_BLOCK:
-					if ($function_name == "main") $function_name = "_start";
-					$inter_repr = new InterRepr(OP_FUNCTION, new FunctionDef($function_name, $function_type_stack));
-					array_push($functions, $function_name);
-					$function_type_stack = array();
+					if ($function_name === "main") {
+						$function_name = "_start";
+						if ($function_type_stack_in != array("void") || $function_type_stack_out != array("void")) {
+							echo "[COMPILATION ERROR]: The main function should have void as input and output parameters\n" . $token->getTokenInformation() . "\n";
+							exit(1);
+						}
+					}
+					if (!sizeof($function_type_stack_in) > 0 || !sizeof($function_type_stack_out) > 0) {
+						echo "[COMPILATION ERROR]: Type information missing for function `" . $function_name . "`\n" .$token->getTokenInformation() . "\n";
+						exit(1);
+					}
+					$function_definition = new FunctionDef($function_name, $function_type_stack_in, $function_type_stack_out);
+					$func_def = findFunctionByName($functions, $function_name);
+					if ($func_def !== null && findFunctionByName($functions, $function_name) != $function_definition) {
+						echo "[COMPILATION ERROR]: Type information mismatch for function `" . $function_name ."` Expected : ";
+						foreach ($func_def->type_stack_in as $type) {
+							echo $type . " ";
+						}
+						echo "-- ";
+						foreach ($func_def->type_stack_out as $type) {
+							echo $type . " ";
+						}
+						echo "but got : ";
+						foreach ($function_definition->type_stack_in as $type) {
+							echo $type . " ";
+						}
+						echo "-- ";
+						foreach ($function_definition->type_stack_out as $type) {
+							echo $type . " ";
+						}
+						echo "\n" . $token->getTokenInformation() . "\n";
+						exit(1);
+					}
+					$inter_repr = new InterRepr(OP_FUNCTION, $function_definition);
+					$function_type_stack_in = array();
+					$function_type_stack_out = array();
+					array_push($implemented_functions, $function_definition);
+					if (findFunctionByName($functions, $function_name) === null) array_push($functions, $function_definition);
 					$in_function_definition = false;
 					$in_function = true;
-					$block_count++;
+					foreach ($function_definition->type_stack_in as $type) {
+						if ($type !== "void") array_push($type_stack, $type);
+					}
 					break;
 				case KEYWORD_END_BLOCK:
 					if ($block_count < 1) {
@@ -193,17 +237,54 @@
 						exit(1);
 					}
 					if ($block_count == 1) {
-						if ($function_name === "_start") {
-							array_push($inter_repr_comp, new InterRepr(OP_PUSH_INTEGER, 0));
-							array_push($inter_repr_comp, new InterRepr(OP_PUSH_INTEGER, 60));
-							$inter_repr = new InterRepr(OP_SYSCALL1);
+						if (!$in_function_definition) {
+							if ($function_name === "_start") {
+								array_push($inter_repr_comp, new InterRepr(OP_PUSH_INTEGER, 0));
+								array_push($inter_repr_comp, new InterRepr(OP_PUSH_INTEGER, 60));
+								$inter_repr = new InterRepr(OP_SYSCALL1);
+							} else {
+								$inter_repr = new InterRepr(OP_RETURN);
+							}
 						} else {
-							$inter_repr = new InterRepr(OP_RETURN);
-							$function_name = "";
+							if ($function_name === "main") {
+								$function_name = "_start";
+								if ($function_type_stack_in != array("void") || $function_type_stack_out != array("void")) {
+									echo "[COMPILATION ERROR]: The main function should have void as input and output parameters\n" . $token->getTokenInformation() . "\n";
+									exit (1);
+								}
+							}
+							array_push($functions, new FunctionDef($function_name, $function_type_stack_in, $function_type_stack_out));
+							$function_type_stack_in = array();
+							$function_type_stack_out = array();
+							$in_function_def_in = true;
 						}
+						$out_func = findFunctionByName($functions, $function_name);
+						foreach ($out_func->type_stack_out as $type) {
+							if ($type === "void") {
+								if (sizeof($type_stack) > 0) {
+									echo "[COMPILATION ERROR]: Unhandled data on the stack in function `" . $function_name ."`\n" . $token->getTokenInformation() . "\n";
+									echo "Found types still present on the stack:\n";
+									foreach ($type_stack as $t) {
+										echo $t . "\n";
+									}
+									exit(1);
+								}
+							} else {
+								$t = array_pop($type_stack);
+								if ($type !== $t) {
+									if ($t === null) $t = "nothing";
+									echo "[COMPILATION ERROR]: Unexpected data on the stack in function `" . $function_name . "` : expected `" . $type ."` but got `" . $t . "` instead\n";
+									exit(1);
+								}
+							}
+						}
+						$function_name = "";
 						$in_function = false;
+						$in_function_definition = false;
 						$block_count--;
 						$function_name_defined = false;
+						if ($inter_repr === null) continue 2;
+						$type_stack = array();
 						break;
 					} else {
 						echo "[TODO]: Closing other than function blocks is not implemented yet";
@@ -213,6 +294,16 @@
 					$inter_repr = new InterRepr(OP_SYSCALL0);
 					break;
 				case KEYWORD_SYSCALL1:
+					if (sizeof($type_stack) < 2) {
+						echo "[COMPILATION ERROR]: Not enough arguments for syscall1\n" . $token->getTokenInformation() . "\n";
+						exit(1);
+					}
+					$t = array_pop($type_stack);
+					if ($t !== "int") {
+						echo "[COMPILATION ERROR]: Expected `int` for keyword `syscall1`, but instead got `" . $t . "`\n" . $token->getTokenInformation() . "\n";
+						exit(1);
+					}
+					array_pop($type_stack);
 					$inter_repr = new InterRepr(OP_SYSCALL1);
 					break;
 				case KEYWORD_SYSCALL2:
@@ -270,6 +361,7 @@
 						if ($in_function) {
 							$value = (int) $token->word;
 							$inter_repr = new InterRepr(OP_PUSH_INTEGER, $value);
+							array_push($type_stack, "int");
 						}
 					} else {
 						if ($in_function_definition) {
@@ -278,11 +370,11 @@
 								if ($type) { // TODO: Disallow using constants names as function names
 									echo "[COMPILATION ERROR]: Types are not allowed as function names\n" . $token->getTokenInformation() . "\n";
 									exit(1);
-								} else if (in_array($token->word, $functions, false)) {
+								} else if (in_array($token->word, $functions, false) && in_array($token->word, $implemented_functions, false)) {
 									echo "[COMPILATION ERROR]: Redefinition of functions is not allowed\n" . $token->getTokenInformation() . "\n";
 									exit(1);
 								} else if ($token->word === "_start") {
-									echo "[COMPILATION ERROR]: The name `_start` is forbidden for functions\n" . $token->getTokenInformation . "\n";
+									echo "[COMPILATION ERROR]: The name `_start` is forbidden for functions\n" . $token->getTokenInformation() . "\n";
 									exit(1);
 								}
 								$function_name_defined = true;
@@ -290,16 +382,38 @@
 								continue 2;
 							} else {
 								if ($type) {
-									array_push($function_type_stack, $token->word);
-									continue 2;
+									if ($in_function_def_in) {
+										array_push($function_type_stack_in, $token->word);
+										continue 2;
+									} else {
+										array_push($function_type_stack_out, $token->word);
+										continue 2;
+									}
 								} else {
+									if ($token->word == "--") {
+										$in_function_def_in = false;
+										continue 2;
+									}
 									echo "[COMPILATION ERROR]: Only types are allowed once the function name is defined\n" . $token->getTokenInformation() . "\n";
 									exit(1);
 								}
 							}
 						} else if ($in_function) {
-							if(in_array($token->word, $functions, false)) {
+							if ($token->word === "main") $token->word = "_start";
+							$fun = findFunctionByName($functions, $token->word);
+							if($fun !== null) {
 								$inter_repr = new InterRepr(OP_CALL, $token->word);
+								$in_func_stack = $fun->type_stack_in;
+								foreach ($in_func_stack as $exp_type) {
+									if ($exp_type !== "void") {
+										$type = array_pop($type_stack);
+										if ($type === null) $type = "nothing";
+										if ($type !== $exp_type) {
+											echo "[COMPILATION ERROR]: Expected `" . $exp_type . "` but got `" . $type . "` instead\n" . $token->getTokenInformation() . "\n";
+											exit(1);
+										}
+									}
+								}
 							} else {
 								echo "[COMPILATION ERROR]: Unknown word\n" . $token->getTokenInformation() . "\n";
 								exit(1);
@@ -316,6 +430,10 @@
 				exit(1);
 			}
 			array_push($inter_repr_comp, $inter_repr);
+		}
+		if (findFunctionByName($functions, "_start") === null) {
+			echo "[COMPILATION ERROR]: No entrypoint has been defined, the entrypoint has to be a function called `main`\n";
+			exit(1);
 		}
 		return $inter_repr_comp;
 	}
@@ -338,18 +456,15 @@
 		return $val;
 	}
 
+	function findFunctionByName($functions, $name) {
+		foreach ($functions as $f) if ($f->name === $name) return $f;
+		return null;
+	}
+
 	function isAnInt($val) {
 		$len = strlen($val);
 		if ($len < 1) return false;
-		if ($len === 1 && $val === "-") return false;
-		$chars = str_split($val);
-		$pos = 0;
-		foreach ($chars as $c) {
-			if ($c === "-" && $pos === 0) continue;
-			if (ctype_digit($c)) continue;
-			else return false;
-		}
-		return true;
+		return ctype_digit($val);
 	}
 
 	function isAType($val) {
@@ -359,11 +474,13 @@
 
 	class FunctionDef {
 		public $name;
-		public $type_stack;
+		public $type_stack_in;
+		public $type_stack_out;
 		
-		function __construct($name, $type_stack) {
+		function __construct($name, $type_stack, $type_stack_out) {
 			$this->name = $name;
-			$this->type_stack = $type_stack;
+			$this->type_stack_in = $type_stack;
+			$this->type_stack_out = $type_stack_out;
 		}
 	}
 
@@ -392,6 +509,7 @@
 					break;
 				case OP_CALL:
 					fwrite($file, "\t;; OP_CALL\n");
+					if ($operation->value === "main") $operation->value = "_start";
 					fwrite($file, "\tcall " . $operation->value . "\n");
 					break;
 				case OP_SYSCALL0:
