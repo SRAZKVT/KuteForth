@@ -24,6 +24,7 @@
 	define('KEYWORD_SWAP','swap');
 	define('KEYWORD_ROT', 'rot');
 	define('KEYWORD_OVER', 'over');
+	define('KEYWORD_STACK_DUMPER', '???'); 
 
 	define('OP_FUNCTION', iota(true));
 	define('OP_RETURN', iota());
@@ -258,23 +259,25 @@
 							$function_type_stack_out = array();
 							$in_function_def_in = true;
 						}
-						$out_func = findFunctionByName($functions, $function_name);
-						foreach ($out_func->type_stack_out as $type) {
-							if ($type === "void") {
-								if (sizeof($type_stack) > 0) {
-									echo "[COMPILATION ERROR]: Unhandled data on the stack in function `" . $function_name ."`\n" . $token->getTokenInformation() . "\n";
-									echo "Found types still present on the stack:\n";
-									foreach ($type_stack as $t) {
-										echo $t . "\n";
+						if ($in_function) {
+							$out_func = findFunctionByName($functions, $function_name);
+							foreach ($out_func->type_stack_out as $type) {
+								if ($type === "void") {
+									if (sizeof($type_stack) > 0) {
+										echo "[COMPILATION ERROR]: Unhandled data on the stack in function `" . $function_name ."`\n" . $token->getTokenInformation() . "\n";
+										echo "Found types still present on the stack:\n";
+										foreach ($type_stack as $t) {
+											echo $t . "\n";
+										}
+										exit(1);
 									}
-									exit(1);
-								}
-							} else {
-								$t = array_pop($type_stack);
-								if ($type !== $t) {
-									if ($t === null) $t = "nothing";
-									echo "[COMPILATION ERROR]: Unexpected data on the stack in function `" . $function_name . "` : expected `" . $type ."` but got `" . $t . "` instead\n";
-									exit(1);
+								} else {
+									$t = array_pop($type_stack);
+									if ($type !== $t) {
+										if ($t === null) $t = "nothing";
+										echo "[COMPILATION ERROR]: Unexpected data on the stack in function `" . $function_name . "` : expected `" . $type ."` but got `" . $t . "` instead\n";
+										exit(1);
+									}
 								}
 							}
 						}
@@ -316,46 +319,202 @@
 					$inter_repr = new InterRepr(OP_SYSCALL1);
 					break;
 				case KEYWORD_SYSCALL2:
+					if (sizeof($type_stack) < 3) {
+						echo "[COMPILATION ERROR]: Not enough arguments for syscall2\n" . $token->getTokenInformation() . "\n";
+						exit(1);
+					}
+					$t = array_pop($type_stack);
+					if ($t !== "int") {
+						echo "[COMPILATION ERROR]: Expected `int` for keyword `syscall2`, but instead got `" . $t . "`\n" . $token->getTokenInformation() . "\n";
+						exit(1);
+					}
+					array_pop($type_stack);
+					array_pop($type_stack);
 					$inter_repr = new InterRepr(OP_SYSCALL2);
 					break;
 				case KEYWORD_SYSCALL3:
+					if (sizeof($type_stack) < 4) {
+						echo "[COMPILATION ERROR]: Not enough arguments for syscall3\n" . $token->getTokenInformation() . "\n";
+						exit(1);
+					}
+					$t = array_pop($type_stack);
+					if ($t !== "int") {
+						echo "[COMPILATION ERROR]: Expected `int` for keyword `syscall3`, but instead got `" . $t . "`\n" . $token->getTokenInformation() . "\n";
+						exit(1);
+					}
+					array_pop($type_stack);
+					array_pop($type_stack);
+					array_pop($type_stack);
 					$inter_repr = new InterRepr(OP_SYSCALL3);
 					break;
 				case KEYWORD_SYSCALL4:
+					if (sizeof($type_stack) < 5) {
+						echo "[COMPILATION ERROR]: Not enough arguments for syscall4\n" . $token->getTokenInformation() . "\n";
+						exit(1);
+					}
+					$t = array_pop($type_stack);
+					if ($t !== "int") {
+						echo "[COMPILATION ERROR]: Expected `int` for keyword `syscall4`, but instead got `" . $t . "`\n" . $token->getTokenInformation() . "\n";
+						exit(1);
+					}
+					array_pop($type_stack);
+					array_pop($type_stack);
+					array_pop($type_stack);
+					array_pop($type_stack);
 					$inter_repr = new InterRepr(OP_SYSCALL4);
 					break;
 				case KEYWORD_SYSCALL5:
+					if (sizeof($type_stack) < 6) {
+						echo "[COMPILATION ERROR]: Not enough arguments for syscall5\n" . $token->getTokenInformation() . "\n";
+						exit(1);
+					}
+					$t = array_pop($type_stack);
+					if ($t !== "int") {
+						echo "[COMPILATION ERROR]: Expected `int` for keyword `syscall5`, but instead got `" . $t . "`\n" . $token->getTokenInformation() . "\n";
+						exit(1);
+					}
+					array_pop($type_stack);
+					array_pop($type_stack);
+					array_pop($type_stack);
+					array_pop($type_stack);
+					array_pop($type_stack);
 					$inter_repr = new InterRepr(OP_SYSCALL5);
 					break;
 				case KEYWORD_SYSCALL6:
+					if (sizeof($type_stack) < 7) {
+						echo "[COMPILATION ERROR]: Not enough arguments for syscall6\n" . $token->getTokenInformation() . "\n";
+						exit(1);
+					}
+					$t = array_pop($type_stack);
+					if ($t !== "int") {
+						echo "[COMPILATION ERROR]: Expected `int` for keyword `syscall6`, but instead got `" . $t . "`\n" . $token->getTokenInformation() . "\n";
+						exit(1);
+					}
+					array_pop($type_stack);
+					array_pop($type_stack);
+					array_pop($type_stack);
+					array_pop($type_stack);
+					array_pop($type_stack);
+					array_pop($type_stack);
 					$inter_repr = new InterRepr(OP_SYSCALL6);
 					break;
 				case KEYWORD_PLUS:
+					if (sizeof($type_stack) < 2) {
+						echo "[COMPILATION ERROR]: Not enough arguments for addition\n" . $token->getTokenInformation() . "\n";
+						exit(1);
+					}
+					$t1 = array_pop($type_stack);
+					$t2 = array_pop($type_stack);
+					if ($t1 !== "int" || $t2 !== "int") {
+						echo "[COMPILATION ERROR]: Expected `int, int` for keyword `plus`, but instead got `" . $t1 . ", " . $t2 . "`\n" . $token->getTokenInformation() . "\n";
+						exit(1);
+					}
+					array_push($type_stack, "int");
 					$inter_repr = new InterRepr(OP_PLUS);
 					break;
 				case KEYWORD_MINUS:
+					if (sizeof($type_stack) < 2) {
+						echo "[COMPILATION ERROR]: Not enough arguments for substraction\n" . $token->getTokenInformation() . "\n";
+						exit(1);
+					}
+					$t1 = array_pop($type_stack);
+					$t2 = array_pop($type_stack);
+					if ($t1 !== "int" || $t2 !== "int") {
+						echo "[COMPILATION ERROR]: Expected `int, int` for keyword `minus`, but instead got `" . $t1 . ", " . $t2 . "`\n" . $token->getTokenInformation() . "\n";
+					}
+					array_push($type_stack, "int");
 					$inter_repr = new InterRepr(OP_MINUS);
 					break;
 				case KEYWORD_MULT:
+					if (sizeof($type_stack) < 2) {
+						echo "[COMPILATION ERROR]: Not enough arguments for multiplication\n" . $token->getTokenInformation() . "\n";
+						exit(1);
+					}
+					$t1 = array_pop($type_stack);
+					$t2 = array_pop($type_stack);
+					if ($t1 !== "int" || $t2 !== "int") {
+						echo "[COMPILATION ERROR]: Expected `int, int` for keyword `mult`, but instead got `" . $t1 . ",  " . $t2 . "`\n" . $token->getTokenInformation() . "\n";
+						exit(1);
+					}
+					array_push($type_stack, "int");
 					$inter_repr = new InterRepr(OP_MULT);
 					break;
 				case KEYWORD_DIVMOD:
+					if (sizeof($type_stack) < 2) {
+						echo "[COMPILATION ERROR]: Not enough arguments for division and modulo\n" . $token->getTokenInformation() . "\n";
+						exit(1);
+					}
+					$t1 = array_pop($type_stack);
+					$t2 = array_pop($type_stack);
+					if ($t1 !== "int" || $t2 !== "int") {
+						echo "[COMPILATION ERROR]: Expected `int, int` for keyword `divmod`, but instead got `" . $t1 . ", " . $t2 . "`\n" . $token->getTokenInformation() . "\n";
+					}
+					array_push($type_stack, "int");
+					array_push($type_stack, "int");
 					$inter_repr = new InterRepr(OP_DIVMOD);
 					break;
 				case KEYWORD_DROP:
+					if (sizeof($type_stack) < 2) {
+						echo "[COMPILATION ERROR]: Nothing to drop\n" . $token->getTokenInformation() . "\n";
+						exit(1);
+					}
+					array_pop($type_stack);
 					$inter_repr = new InterRepr(OP_DROP);
 					break;
 				case KEYWORD_DUP:
+					if (sizeof($type_stack) < 1) {
+						echo "[COMPILATION ERROR]: Nothing to duplicate\n" . $token->getTokenInformation() . "\n";
+						exit(1);
+					}
+					$t = array_pop($type_stack);
+					array_push($type_stack, $t);
+					array_push($type_stack, $t);
 					$inter_repr = new InterRepr(OP_DUP);
 					break;
 				case KEYWORD_SWAP:
+					if (sizeof($type_stack) < 2) {
+						echo "[COMPILATION ERROR]: Not enough elements to swap\n" . $token->getTokenInformation() . "\n";
+						exit(1);
+					}
+					$t1 = array_pop($type_stack);
+					$t2 = array_pop($type_stack);
+					array_push($type_stack, $t1);
+					array_push($type_stack, $t2);
 					$inter_repr = new InterRepr(OP_SWAP);
 					break;
 				case KEYWORD_ROT:
+					if (sizeof($type_stack) < 3) {
+						echo "[COMPILATION ERROR]: Not enough elements to rotate\n" . $token->getTokenInformation() . "\n";
+						exit(1);
+					}
+					$t1 = array_pop($type_stack);
+					$t2 = array_pop($type_stack);
+					$t3 = array_pop($type_stack);
+					array_push($type_stack, $t2);
+					array_push($type_stack, $t1);
+					array_push($type_stack, $t3);
 					$inter_repr = new InterRepr(OP_ROT);
 					break;
 				case KEYWORD_OVER:
+					if (sizeof($type_stack) == 1) {
+						echo "[COMPILATION ERROR]: Not element behind the top of the stack\n" . $token->getTokenInformation() . "\n";
+						exit(1);
+					} else if (sizeof(type_stack) < 1) {
+						echo "[COMPILATION ERROR]: The stack is empty, \n" . $token->getTokenInformation() . "\n";
+					}
+					$t1 = array_pop($type_stack);
+					$t2 = array_pop($type_stack);
+					array_push($type_stack, $t2);
+					array_push($type_stack, $t1);
+					array_push($type_stack, $t2);
 					$inter_repr = new InterRepr(OP_OVER);
+					break;
+				case KEYWORD_STACK_DUMPER:
+					echo "[DUMP STACK]: at " . $token->getTokenInformation() . "\n";
+					foreach ($type_stack as $t) {
+						echo $t . "\n";
+					}
+					exit(2);
 					break;
 				default:
 					if (isAnInt($token->word)) {
@@ -384,6 +543,10 @@
 									exit(1);
 								} else if ($token->word === "_start") {
 									echo "[COMPILATION ERROR]: The name `_start` is forbidden for functions\n" . $token->getTokenInformation() . "\n";
+									exit(1);
+								}
+								if (!isFunctionNameLegal($token->word)) {
+									echo "[COMPILATION ERROR]: The function name `" . $token->word . "` is not legal\n" . $token->getTokenInformation() . "\n";
 									exit(1);
 								}
 								$function_name_defined = true;
@@ -505,6 +668,14 @@
 		}
 	}
 
+	function isFunctionNameLegal($name) {
+		$allowedCharacters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_$#@~.?";
+		$name_chr = str_split($name);
+		$valid_chr = str_split($allowedCharacters);
+		foreach ($name_chr as $c) if (!in_array($c, $valid_chr, false)) return false;
+		return true;
+	}
+
 	function generate($inter_repr) {
 		$current_function = null;
 		$file = fopen("output.asm", "w") or die ("[ERROR]: Unable to open the output file\n");
@@ -612,10 +783,11 @@
 					break;
 				case OP_DIVMOD:
 					fwrite($file, "\t;; OP_DIVMOD\n");
+					fwrite($file, "\tmov rdi, 0\n");
 					fwrite($file, "\tpop rdi\n");
 					fwrite($file, "\tpop rax\n");
 					fwrite($file, "\tdiv rdi\n");
-					fwrite($file, "\tpush rdi\n");
+					fwrite($file, "\tpush rdx\n");
 					fwrite($file, "\tpush rax\n");
 					break;
 				case OP_DROP:
