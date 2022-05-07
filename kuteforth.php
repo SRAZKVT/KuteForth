@@ -291,6 +291,15 @@
 						exit(1);
 					}
 				case KEYWORD_SYSCALL0:
+					if (sizeof($type_stack) < 1) {
+						echo "[COMPILATION ERROR]: Not enough arguments for syscall0\n" . $token->getTokenInformation() . "\n";
+						exit(1);
+					}
+					$t = array_pop($type_stack);
+					if ($t !== "int") {
+						echo "[COMPILATION ERROR]: Expected `int` for keyword `syscall0`, but instead got `" . $t . "`\n";
+						exit(1);
+					}
 					$inter_repr = new InterRepr(OP_SYSCALL0);
 					break;
 				case KEYWORD_SYSCALL1:
@@ -412,6 +421,12 @@
 											echo "[COMPILATION ERROR]: Expected `" . $exp_type . "` but got `" . $type . "` instead\n" . $token->getTokenInformation() . "\n";
 											exit(1);
 										}
+									}
+								}
+								$out_func_stack = $fun->type_stack_out;
+								foreach ($out_func_stack as $exp_type) {
+									if ($exp_type !== "void") {
+										array_push($type_stack, $exp_type);
 									}
 								}
 							} else {

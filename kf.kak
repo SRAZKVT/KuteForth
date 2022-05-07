@@ -8,7 +8,7 @@ addhl shared/kuteforth/single-string region "'" "'" fill value
 addhl shared/kuteforth/comment region '//' '$' fill comment
 addhl shared/kuteforth/code default-region group
 
-addhl shared/kuteforth/code/type regex '\b(?:bool|int|ptr)\b' 0:type
+addhl shared/kuteforth/code/type regex '\b(?:bool|int|ptr|void)\b' 0:type
 addhl shared/kuteforth/code/stackops regex '\b(?:swap|drop|over|rot|dup)\b' 0:function
 addhl shared/kuteforth/code/keywords regex '\b(?:func|in|end|)\b' 0:keyword
 
