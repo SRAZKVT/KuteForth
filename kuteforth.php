@@ -450,6 +450,12 @@
 			echo "[COMPILATION ERROR]: No entrypoint has been defined, the entrypoint has to be a function called `main`\n";
 			exit(1);
 		}
+		foreach ($functions as $f) {
+			if (findFunctionByName($implemented_functions, $f->name) === null) {
+				echo "[COMPILATION ERROR]: Function `" . $f->name . "` has been defined, but no implementation has been provided\n";
+				exit(1);
+			}
+		}
 		return $inter_repr_comp;
 	}
 
