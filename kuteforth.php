@@ -91,6 +91,7 @@
 	* This function opens the designated file, parses each word, and returns an array of Tokens.
 	*/
 	function getTokens($filepath) {
+		$prev_slash = false;
 		$ret = array();
 		$file = fopen($filepath, "r") or die ("ERROR: Unable to open the file " . $filepath);
 		$code = fread($file, filesize($filepath));
@@ -103,6 +104,12 @@
 			$current_word = "";
 			foreach ($chars as $c) {
 				$char_place++;
+				if ($c === "/") {
+					if ($prev_slash) {
+						continue 2;
+					}
+					$prev_slash = true;
+				}
 				if (!isWhitespace($c)) {
 					$current_word = $current_word . $c;
 				} else {
@@ -371,9 +378,11 @@
 				case OP_FUNCTION:
 					fwrite($file, "\t;; OP_FUNCTION\n");
 					fwrite($file, "\t" . $operation->value->name . ":\n");
+					if ($operation->value->name !== "_start") fwrite($file, "\tpop r15\n"); // Pop function return to r15 register
 					break;
 				case OP_RETURN:
 					fwrite($file, "\t;; OP_RETURN\n");
+					fwrite($file, "\tpush r15\n");
 					fwrite($file, "\tret\n");
 					break;
 				case OP_PUSH_INTEGER:
