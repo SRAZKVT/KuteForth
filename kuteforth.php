@@ -96,10 +96,11 @@
 			foreach ($inter_repr as $ir) {
 				switch ($ir->op_code) {
 					case OP_FUNCTION:
-						echo "OP_FUNCTION : " . $ir->value->name . " [";
+						echo "OP_FUNCTION : " . $ir->value->name . " -> ";
 						foreach ($ir->value->type_stack_in as $t) echo $t . " ";
+						echo "-- ";
 						foreach ($ir->value->type_stack_out as $t) echo $t . " ";
-						echo "]\n";
+						echo "\n";
 						break;
 					case OP_RETURN:
 						echo "OP_RETURN\n";
@@ -277,10 +278,11 @@
 		$function_type_stack_in = array();
 		$function_type_stack_out = array();
 		$block_count = 0;
-		$in_do_block = false;
+		$do_depth = 0;
 		$jump_stack = array();
 		$jmp_end_stacks = array();
 		$jmp_nb = 0;
+		$condition_def = false;
 
 		foreach ($tokens as $token) {
 			$inter_repr = null;
@@ -308,6 +310,11 @@
 					}
 					if (!sizeof($function_type_stack_in) > 0 || !sizeof($function_type_stack_out) > 0) {
 						echo "[COMPILATION ERROR]: Type information missing for function `" . $function_name . "`\n" .$token->getTokenInformation() . "\n";
+						exit(1);
+					}
+					if (
+					(in_array("void", $function_type_stack_in, false) && sizeof($function_type_stack_in) != 1) || (in_array("void", $function_type_stack_out, false) && sizeof($function_type_stack_out) != 1)) {
+						echo "[COMPILATION ERROR]: Illegal type arguments for function " . $function_name . "\n" . $token->getTokenInformation() . "\n";
 						exit(1);
 					}
 					$function_definition = new FunctionDef($function_name, $function_type_stack_in, $function_type_stack_out);
@@ -375,12 +382,18 @@
 						$function_name_defined = false;
 						if ($inter_repr === null) continue 2;
 						break;
-					} else if ($in_do_block) {
-						$block_count--;
+					} else if ($do_depth > 0) {
 						$jmp = $function_name . "jmp" . $jmp_nb;
+						$jmp_nb++;
 						$inter_repr = new InterRepr(OP_LABEL, $jmp);
-						$inter_repr_comp[array_pop($jump_stack)]->value = $jmp;
-						$in_do_block = false;
+						if (isset($jump_stack[$block_count])) $inter_repr_comp[$jump_stack[$block_count]]->value = $jmp;
+						$end = array_pop($jmp_end_stacks[$block_count]);
+						while ($end !== null) {
+							$inter_repr_comp[$end]->value = $jmp;
+							$end = array_pop($jmp_end_stacks[$block_count]);
+						}
+						$do_depth--;
+						$block_count--;
 					} else {
 						echo "[ERROR]: Unhandled block closing\n";
 						exit(69);
@@ -388,22 +401,46 @@
 					break;
 				case KEYWORD_IF:
 					$block_count++;
+					$condition_def = true;
 					continue 2;
 					break;
 				case KEYWORD_DO:
-					$in_do_block = true;
-					array_push($jump_stack, sizeof($inter_repr_comp));
+					if (!$condition_def) {
+						echo "[COMPILATION ERROR]: Do cannot be called outside of a conditional\n" . $token->getTokenInformation() . "\n";
+					}
+					$do_depth++;
+					$jump_stack[$block_count] = sizeof($inter_repr_comp);
 					$inter_repr = new InterRepr(OP_DO);
+					$condition_def = false;
 					break;
 				case KEYWORD_ELSE:
-					echo "[TODO]: Keyword else is not implemented yet\n";
-					exit(1);
+					if ($do_depth < 1) {
+						echo "[COMPILATION ERROR]: Else has no condition to close\n" . $token->getTokenInformation() . "\n";
+						exit(1);
+					}
+					if (!isset($jmp_end_stacks[$block_count])) $jmp_end_stacks[$block_count] = array();
+					array_push($jmp_end_stacks[$block_count], sizeof($inter_repr_comp));
+					array_push($inter_repr_comp, new InterRepr(OP_JMP));
+					$jmp = $function_name . "jmp" . $jmp_nb;
+					$jmp_nb++;
+					$inter_repr_comp[$jump_stack[$block_count]]->value = $jmp;
+					$jump_stack[$block_count] = null;
+					$inter_repr = new InterRepr(OP_LABEL, $jmp);
 					break;
 				case KEYWORD_ELIF:
-					echo "[TODO]: Keyword elif is not implemented yet\n";
-					exit(1);
-					$inter_repr[array_pop($jump_stack)]->value = $function_name . "jmp" . $jmp_nb;
+					if ($do_depth < 1) {
+						echo "[COMPILATION ERROR]: Elif has no condition to close\n" . $token->getTokenInformation() . "\n";
+						exit(1);
+					}
+					if (!isset($jmp_end_stacks[$block_count])) $jmp_end_stacks[$block_count] = array();
+					array_push($jmp_end_stacks[$block_count], sizeof($inter_repr_comp));
+					array_push($inter_repr_comp, new InterRepr(OP_JMP));
+					$jmp = $function_name . "jmp" . $jmp_nb;
 					$jmp_nb++;
+					$inter_repr_comp[$jump_stack[$block_count]]->value = $jmp;
+					$jump_stack[$block_count] = null;
+					$inter_repr = new InterRepr(OP_LABEL, $jmp);
+					$condition_def = true;
 					break;
 				case KEYWORD_SYSCALL0:
 					$inter_repr = new InterRepr(OP_SYSCALL0);
