@@ -66,5 +66,18 @@ mult   -> multiplies the two numbers on top of the stack and pushes the result o
 divmod -> divides the second number on the stack from the first, pushes the quotient at the first place and the remainder at the first place on the stack
 ```
 
+## Conditions :
+
+There are currently 3 conditional blocks : if, else and elif. They are used as follows :
+```
+if <condition> do
+	// things
+elif <condition> do
+	// things
+else
+	// things
+end
+```
+
 ## Stack dumper :
 If at one point you are confused or forget what type of elements are onto the stack, you can use the special keyword `???`, which will stop the compiler whenever encountered, and will print the state of the type stack at that position.
