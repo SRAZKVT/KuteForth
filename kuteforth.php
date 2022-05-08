@@ -3,11 +3,15 @@
 	$iota = 0;
 	$functions = array();
 	$constants = array(); // Constants are not implemented yet
-	$types = array("int", "void");
+	$types = array("int", "void", "bool");
 
 	define('KEYWORD_FUNCTION' ,'func');
 	define('KEYWORD_IN_BLOCK' ,'in');
 	define('KEYWORD_END_BLOCK' ,'end');
+	define('KEYWORD_IF', 'if');
+	define('KEYWORD_DO', 'do');
+	define('KEYWORD_ELSE', 'else');
+	define('KEYWORD_ELIF', 'elif');
 	define('KEYWORD_SYSCALL0' ,'syscall0');
 	define('KEYWORD_SYSCALL1' ,'syscall1');
 	define('KEYWORD_SYSCALL2' ,'syscall2');
@@ -19,6 +23,8 @@
 	define('KEYWORD_MINUS', 'minus');
 	define('KEYWORD_MULT', 'mult');
 	define('KEYWORD_DIVMOD', 'divmod');
+	define('KEYWORD_EQ', 'eq');
+	define('KEYWORD_NOT', 'not');
 	define('KEYWORD_DROP', 'drop');
 	define('KEYWORD_DUP', 'dup');
 	define('KEYWORD_SWAP','swap');
@@ -30,6 +36,9 @@
 	define('OP_RETURN', iota());
 	define('OP_PUSH_INTEGER', iota());
 	define('OP_CALL', iota());
+	define('OP_DO', iota());
+	define('OP_LABEL', iota());
+	define('OP_JMP', iota());
 	define('OP_SYSCALL0', iota());
 	define('OP_SYSCALL1', iota());
 	define('OP_SYSCALL2', iota());
@@ -41,6 +50,8 @@
 	define('OP_MINUS', iota());
 	define('OP_MULT', iota());
 	define('OP_DIVMOD', iota());
+	define('OP_EQ', iota());
+	define('OP_NOT', iota());
 	define('OP_DROP', iota());
 	define('OP_DUP', iota());
 	define('OP_SWAP', iota());
@@ -168,8 +179,13 @@
 		$function_type_stack_in = array();
 		$function_type_stack_out = array();
 		$block_count = 0;
-
+		$in_do_block = false;
+		$jump_stack = array();
 		$type_stack = array();
+		$do_type_stacks = array();
+		$jmp_end_stacks = array();
+		$type_stack_cpy = array();
+		$jmp_nb = 0;
 
 		foreach ($tokens as $token) {
 			$inter_repr = null;
@@ -228,6 +244,7 @@
 					if (findFunctionByName($functions, $function_name) === null) array_push($functions, $function_definition);
 					$in_function_definition = false;
 					$in_function = true;
+					$jmp_nb = 0;
 					foreach ($function_definition->type_stack_in as $type) {
 						if ($type !== "void") array_push($type_stack, $type);
 					}
@@ -281,18 +298,54 @@
 								}
 							}
 						}
+						$block_count--;
 						$function_name = "";
 						$in_function = false;
 						$in_function_definition = false;
-						$block_count--;
 						$function_name_defined = false;
 						if ($inter_repr === null) continue 2;
 						$type_stack = array();
 						break;
+					} else if ($in_do_block) {
+						$block_count--;
+						$jmp = $function_name . "jmp" . $jmp_nb;
+						$inter_repr = new InterRepr(OP_LABEL, $jmp);
+						$inter_repr_comp[array_pop($jump_stack)]->value = $jmp;
+						$in_do_block = false;
 					} else {
-						echo "[TODO]: Closing other than function blocks is not implemented yet";
+						echo "[ERROR]: Unhandled block closing\n";
+						exit(69);
+					}
+					break;
+				case KEYWORD_IF:
+					$block_count++;
+					continue 2;
+					break;
+				case KEYWORD_DO:
+					$t = "nothing";
+					if (sizeof($type_stack) > 0) $t = array_pop($type_stack);
+					if ($t !== "bool") {
+						echo "[COMPILATION ERROR]: Keyword do expected `bool` but got `" . $t . "` instead\n" . $token->getTokenInformation() . "\n";
 						exit(1);
 					}
+					$in_do_block = true;
+					array_push($jump_stack, sizeof($inter_repr_comp));
+					$ts = $type_stack;
+					
+					if (!array_key_exists($block_count, $type_stack_cpy)) $type_stack_cpy[$block_count] = array();
+					array_push($type_stack_cpy[$block_count], $ts);
+					$inter_repr = new InterRepr(OP_DO);
+					break;
+				case KEYWORD_ELSE:
+					echo "[TODO]: Keyword else is not implemented yet\n";
+					exit(1);
+					break;
+				case KEYWORD_ELIF:
+					echo "[TODO]: Keyword elif is not implemented yet\n";
+					exit(1);
+					$inter_repr[array_pop($jump_stack)]->value = $function_name . "jmp" . $jmp_nb;
+					$jmp_nb++;
+					break;
 				case KEYWORD_SYSCALL0:
 					if (sizeof($type_stack) < 1) {
 						echo "[COMPILATION ERROR]: Not enough arguments for syscall0\n" . $token->getTokenInformation() . "\n";
@@ -453,13 +506,40 @@
 					array_push($type_stack, "int");
 					$inter_repr = new InterRepr(OP_DIVMOD);
 					break;
-				case KEYWORD_DROP:
+				case KEYWORD_EQ:
 					if (sizeof($type_stack) < 2) {
+						echo "[COMPILATION ERROR]: Not enough arguments to compare as equal\n" . $token->getTokenInformation() . "\n";
+						exit(1);
+					}
+					$t1 = array_pop($type_stack);
+					$t2 = array_pop($type_stack);
+					if ($t1 !== "int" || $t2 !== "int") {
+						echo "[COMPILATION ERROR]: Expected `int, int` for keyword `eq`, but instead got `" . $t1 . ", " . $t2 . "`\n" . $token->getTokenInformation() . "\n";
+						exit(1);
+					}
+					$inter_repr = new InterRepr(OP_EQ);
+					array_push($type_stack, "bool");
+					break;
+				case KEYWORD_DROP:
+					if (sizeof($type_stack) < 1) {
 						echo "[COMPILATION ERROR]: Nothing to drop\n" . $token->getTokenInformation() . "\n";
 						exit(1);
 					}
 					array_pop($type_stack);
 					$inter_repr = new InterRepr(OP_DROP);
+					break;
+				case KEYWORD_NOT:
+					if (sizeof($type_stack) < 1) {
+						echo "[COMPILATION ERROR]: No element to invert\n" . $token->getTokenInformation() . "\n";
+						exit(1);
+					}
+					$t = array_pop($type_stack);
+					if ($t !== "bool") {
+						echo "[COMPILATION ERROR]: Inversion expected `bool` but got `" . $t . "`\n" . $token->getTokenInformation() . "\n";
+						exit(1);
+					}
+					array_push($type_stack, "bool");
+					$inter_repr = new InterRepr(OP_NOT);
 					break;
 				case KEYWORD_DUP:
 					if (sizeof($type_stack) < 1) {
@@ -512,8 +592,9 @@
 				case KEYWORD_STACK_DUMPER:
 					echo "[DUMP STACK]: at " . $token->getTokenInformation() . "\n";
 					foreach ($type_stack as $t) {
-						echo $t . "\n";
+						echo $t . " ";
 					}
+					echo "\n";
 					exit(2);
 					break;
 				default:
@@ -704,6 +785,21 @@
 					if ($operation->value === "main") $operation->value = "_start";
 					fwrite($file, "\tcall " . $operation->value . "\n");
 					break;
+				case OP_DO:
+					fwrite($file, "\t;;OP_DO\n");
+					fwrite($file, "\tpop rax\n");
+					fwrite($file, "\tmov rdi, 0\n");
+					fwrite($file, "\tcmp rax, rdi\n");
+					fwrite($file, "\tje " . $operation->value . "\n");
+					break;
+				case OP_LABEL:
+					fwrite($file, "\t;; OP_LABEL\n");
+					fwrite($file, "\t" . $operation->value . ":\n");
+					break;
+				case OP_JMP:
+					fwrite($file, "\t;; OP_JMP\n");
+					fwrite($file, "\tjmp " . $operation->value . "\n");
+					break;
 				case OP_SYSCALL0:
 					fwrite($file, "\t;; OP_SYSCALL0\n");
 					fwrite($file, "\tpop rax\n");
@@ -759,6 +855,23 @@
 					fwrite($file, "\tpop r8\n");
 					fwrite($file, "\tpop r9\n");
 					fwrite($file, "\tsyscall\n");
+					break;
+				case OP_EQ:
+					fwrite($file, "\t;; OP_EQ\n");
+					fwrite($file, "\tmov rsi, 0\n");
+					fwrite($file, "\tmov rdx, 1\n");
+					fwrite($file, "\tpop rax\n");
+					fwrite($file, "\tpop rdi\n");
+					fwrite($file, "\tcmp rax, rdi\n");
+					fwrite($file, "\tcmove rsi, rdx\n");
+					fwrite($file, "\tpush rsi\n");
+					break;
+				case OP_NOT:
+					fwrite($file, "\t;; OP_NOT\n");
+					fwrite($file, "\tpop rax\n");
+					fwrite($file, "\tmov rdi, 1\n");
+					fwrite($file, "\txor rax, rdi\n");
+					fwrite($file, "\tpush rax\n");
 					break;
 				case OP_PLUS:
 					fwrite($file, "\t;; OP_PLUS\n");
