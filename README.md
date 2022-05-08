@@ -8,6 +8,7 @@ This is a small programming language i am developping on my free time, to experi
 ```console
 $ ./kuteforth.php foo.kf       # compiles the file named foo.kf
 $ ./kuteforth.php -r foo.kf    # compiles and automatically run the file named foo.kf
+$ ./kuteforth.php -d foo.kf    # prints to the terminal the intermediary representation of the program in the file named foo.kf
 ```
 # How to use the language :
 
