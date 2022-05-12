@@ -3,62 +3,75 @@
 	$iota = 0;
 	$functions = array();
 	$constants = array(); // Constants are not implemented yet
-	$types = array("int", "void", "bool");
 
-	define('KEYWORD_FUNCTION' ,'func');
-	define('KEYWORD_IN_BLOCK' ,'in');
-	define('KEYWORD_END_BLOCK' ,'end');
-	define('KEYWORD_IF', 'if');
-	define('KEYWORD_DO', 'do');
-	define('KEYWORD_ELSE', 'else');
-	define('KEYWORD_ELIF', 'elif');
-	define('KEYWORD_SYSCALL0' ,'syscall0');
-	define('KEYWORD_SYSCALL1' ,'syscall1');
-	define('KEYWORD_SYSCALL2' ,'syscall2');
-	define('KEYWORD_SYSCALL3' ,'syscall3');
-	define('KEYWORD_SYSCALL4' ,'syscall4');
-	define('KEYWORD_SYSCALL5' ,'syscall5');
-	define('KEYWORD_SYSCALL6' ,'syscall6');
-	define('KEYWORD_PLUS', 'plus');
-	define('KEYWORD_MINUS', 'minus');
-	define('KEYWORD_MULT', 'mult');
-	define('KEYWORD_DIVMOD', 'divmod');
-	define('KEYWORD_EQ', 'eq');
-	define('KEYWORD_NOT', 'not');
-	define('KEYWORD_DROP', 'drop');
-	define('KEYWORD_DUP', 'dup');
-	define('KEYWORD_SWAP','swap');
-	define('KEYWORD_ROT', 'rot');
-	define('KEYWORD_OVER', 'over');
-	define('KEYWORD_STACK_DUMPER', '???'); 
+	define('KEYWORD_FUNCTION' ,'func');     iota(true);
+	define('KEYWORD_IN_BLOCK' ,'in');       iota();
+	define('KEYWORD_END_BLOCK' ,'end');     iota();
+	define('KEYWORD_IF', 'if');             iota();
+	define('KEYWORD_DO', 'do');             iota();
+	define('KEYWORD_ELSE', 'else');         iota();
+	define('KEYWORD_ELIF', 'elif');         iota();
+	define('KEYWORD_SYSCALL0' ,'syscall0'); iota();
+	define('KEYWORD_SYSCALL1' ,'syscall1'); iota();
+	define('KEYWORD_SYSCALL2' ,'syscall2'); iota();
+	define('KEYWORD_SYSCALL3' ,'syscall3'); iota();
+	define('KEYWORD_SYSCALL4' ,'syscall4'); iota();
+	define('KEYWORD_SYSCALL5' ,'syscall5'); iota();
+	define('KEYWORD_SYSCALL6' ,'syscall6'); iota();
+	define('KEYWORD_PLUS', 'plus');         iota();
+	define('KEYWORD_MINUS', 'minus');       iota();
+	define('KEYWORD_MULT', 'mult');         iota();
+	define('KEYWORD_DIVMOD', 'divmod');     iota();
+	define('KEYWORD_EQ', 'eq');             iota();
+	define('KEYWORD_NOT', 'not');           iota();
+	define('KEYWORD_DROP', 'drop');         iota();
+	define('KEYWORD_DUP', 'dup');           iota();
+	define('KEYWORD_SWAP','swap');          iota();
+	define('KEYWORD_ROT', 'rot');           iota();
+	define('KEYWORD_OVER', 'over');         iota();
+	define('KEYWORD_STACK_DUMPER', '???');  iota();
+	define('KEYWORD_COUNT',                 iota());
 
-	define('OP_FUNCTION', iota(true));
-	define('OP_RETURN', iota());
-	define('OP_PUSH_INTEGER', iota());
-	define('OP_CALL', iota());
-	define('OP_DO', iota());
-	define('OP_LABEL', iota());
-	define('OP_JMP', iota());
-	define('OP_SYSCALL0', iota());
-	define('OP_SYSCALL1', iota());
-	define('OP_SYSCALL2', iota());
-	define('OP_SYSCALL3', iota());
-	define('OP_SYSCALL4', iota());
-	define('OP_SYSCALL5', iota());
-	define('OP_SYSCALL6', iota());
-	define('OP_PLUS', iota());
-	define('OP_MINUS', iota());
-	define('OP_MULT', iota());
-	define('OP_DIVMOD', iota());
-	define('OP_EQ', iota());
-	define('OP_NOT', iota());
-	define('OP_DROP', iota());
-	define('OP_DUP', iota());
-	define('OP_SWAP', iota());
-	define('OP_ROT', iota());
-	define('OP_OVER', iota());
-	define('OP_STACK_DUMPER', iota());
+	define('OP_FUNCTION',       iota(true));
+	define('OP_RETURN',         iota());
+	define('OP_PUSH_INTEGER',   iota());
+	define('OP_CALL',           iota());
+	define('OP_DO',             iota());
+	define('OP_LABEL',          iota());
+	define('OP_JMP',            iota());
+	define('OP_SYSCALL0',       iota());
+	define('OP_SYSCALL1',       iota());
+	define('OP_SYSCALL2',       iota());
+	define('OP_SYSCALL3',       iota());
+	define('OP_SYSCALL4',       iota());
+	define('OP_SYSCALL5',       iota());
+	define('OP_SYSCALL6',       iota());
+	define('OP_PLUS',           iota());
+	define('OP_MINUS',          iota());
+	define('OP_MULT',           iota());
+	define('OP_DIVMOD',         iota());
+	define('OP_EQ',             iota());
+	define('OP_NOT',            iota());
+	define('OP_DROP',           iota());
+	define('OP_DUP',            iota());
+	define('OP_SWAP',           iota());
+	define('OP_ROT',            iota());
+	define('OP_OVER',           iota());
+	define('OP_STACK_DUMPER',   iota());
+	define('OP_ENTER_BLOCK',    iota());
+	define('OP_LEAVE_BLOCK',    iota());
+	define('OP_COUNT',          iota());
 
+	define('TYPE_VOID',     'void');    iota(true);
+	define('TYPE_INT',      'int');     iota();
+	define('TYPE_BOOL',     'bool');    iota();
+	define('TYPE_COUNT',    iota());
+	$types = array(TYPE_VOID, TYPE_INT, TYPE_BOOL);
+
+	define('BLOCK_IF_WHILE',        iota(true));
+	define('BLOCK_MULT_BODY_IF',    iota());
+	define('BLOCK_DO',              iota());
+	define('BLOCK_FUNC',            iota());
 
 	main($argv);
 
@@ -84,13 +97,17 @@
 		$basename = basename($filepath, ".kf");
 		echo "[INFO]: Parsing tokens\n";
 		$tokens = getTokens($filepath);
-		echo "[INFO]: Translating to intermediary representation\n";
+		echo "[INFO]: Translating to intermediary representation and type-checking\n";
 		$inter_repr = getInterRepr($tokens);
-		echo "[Info]: Type-checking\n";
+
 		typeChecking($inter_repr);
 
 		// TODO: DCE
 
+		if (OP_COUNT != 28) {
+			echo "[ERROR]: Unhandled op_codes in dump, there are now " . OP_COUNT . "\n";
+			exit(127);
+		}
 		if ($dump) {
 			echo "[DUMP]: Here is the intermediary representation of the program\n";
 			foreach ($inter_repr as $ir) {
@@ -174,6 +191,12 @@
 					case OP_OVER:
 						echo "OP_OVER\n";
 						break;
+					case OP_ENTER_BLOCK:
+						echo "OP_ENTER_BLOCK\n";
+						break;
+					case OP_LEAVE_BLOCK:
+						echo "OP_LEAVE_BLOCK\n";
+						break;
 				}
 			}
 			exit(0);
@@ -237,7 +260,6 @@
 				$token = new Token($current_word, $line_place, $char_place - strlen($current_word), $filepath);
 				array_push($ret, $token);
 			}
-									
 		}
 		fclose($file);
 		return $ret;
@@ -269,6 +291,8 @@
 		
 		$inter_repr_comp = array();
 
+		$block_type = array();
+
 		$implemented_functions = array();
 		$in_function_def_in = false;
 		$in_function_definition = false;
@@ -284,8 +308,12 @@
 		$jmp_nb = 0;
 		$condition_def = false;
 
+
+		if (KEYWORD_COUNT != 26) {
+			echo "[ERROR]: Unhandled keywords, there are now " . KEYWORD_COUNT . "keywords\n";
+			exit(127);
+		}
 		foreach ($tokens as $token) {
-			$inter_repr = null;
 			switch ($token->word) {
 				case KEYWORD_FUNCTION:
 					if ($in_function || $in_function_definition) {
@@ -339,7 +367,8 @@
 						echo "\n" . $token->getTokenInformation() . "\n";
 						exit(1);
 					}
-					$inter_repr = new InterRepr(OP_FUNCTION, $function_definition);
+					array_push($inter_repr_comp, new InterRepr(OP_FUNCTION, $function_definition, $token));
+					array_push($inter_repr_comp, new InterRepr(OP_ENTER_BLOCK, BLOCK_FUNC, $token));
 					$function_type_stack_in = array();
 					$function_type_stack_out = array();
 					array_push($implemented_functions, $function_definition);
@@ -356,12 +385,12 @@
 					if ($block_count == 1) {
 						if (!$in_function_definition) {
 							if ($function_name === "_start") {
-								array_push($inter_repr_comp, new InterRepr(OP_PUSH_INTEGER, 0));
-								array_push($inter_repr_comp, new InterRepr(OP_PUSH_INTEGER, 60));
-								$inter_repr = new InterRepr(OP_SYSCALL1);
-							} else {
-								$inter_repr = new InterRepr(OP_RETURN);
+								array_push($inter_repr_comp, new InterRepr(OP_PUSH_INTEGER, 0, $token));
+								array_push($inter_repr_comp, new InterRepr(OP_PUSH_INTEGER, 60, $token));
+								array_push($inter_repr_comp, new InterRepr(OP_SYSCALL1, null, $token));
 							}
+							array_push($inter_repr_comp, new InterRepr(OP_RETURN, null, $token));
+							
 						} else {
 							if ($function_name === "main") {
 								$function_name = "_start";
@@ -380,12 +409,11 @@
 						$in_function = false;
 						$in_function_definition = false;
 						$function_name_defined = false;
-						if ($inter_repr === null) continue 2;
 						break;
 					} else if ($do_depth > 0) {
 						$jmp = $function_name . "jmp" . $jmp_nb;
 						$jmp_nb++;
-						$inter_repr = new InterRepr(OP_LABEL, $jmp);
+						array_push($inter_repr_comp, new InterRepr(OP_LABEL, $jmp, $token));
 						if (isset($jump_stack[$block_count])) $inter_repr_comp[$jump_stack[$block_count]]->value = $jmp;
 						$end = array_pop($jmp_end_stacks[$block_count]);
 						while ($end !== null) {
@@ -398,8 +426,10 @@
 						echo "[ERROR]: Unhandled block closing\n";
 						exit(69);
 					}
+					array_push($inter_repr_comp, new InterRepr(OP_LEAVE_BLOCK, null, $token));
 					break;
 				case KEYWORD_IF:
+					array_push($inter_repr_comp, new InterRepr(OP_ENTER_BLOCK, BLOCK_IF_WHILE, $token));
 					$block_count++;
 					$condition_def = true;
 					continue 2;
@@ -409,8 +439,9 @@
 						echo "[COMPILATION ERROR]: Do cannot be called outside of a conditional\n" . $token->getTokenInformation() . "\n";
 					}
 					$do_depth++;
+					array_push($inter_repr_comp, new InterRepr(OP_ENTER_BLOCK, BLOCK_DO, $token));
 					$jump_stack[$block_count] = sizeof($inter_repr_comp);
-					$inter_repr = new InterRepr(OP_DO);
+					array_push($inter_repr_comp, new InterRepr(OP_DO, null, $token));
 					$condition_def = false;
 					break;
 				case KEYWORD_ELSE:
@@ -418,86 +449,90 @@
 						echo "[COMPILATION ERROR]: Else has no condition to close\n" . $token->getTokenInformation() . "\n";
 						exit(1);
 					}
+					array_push($inter_repr_comp, new InterRepr(OP_ENTER_BLOCK, BLOCK_MULT_BODY_IF, $token));
 					if (!isset($jmp_end_stacks[$block_count])) $jmp_end_stacks[$block_count] = array();
 					array_push($jmp_end_stacks[$block_count], sizeof($inter_repr_comp));
-					array_push($inter_repr_comp, new InterRepr(OP_JMP));
+					array_push($inter_repr_comp, new InterRepr(OP_JMP, null, $token));
 					$jmp = $function_name . "jmp" . $jmp_nb;
 					$jmp_nb++;
 					$inter_repr_comp[$jump_stack[$block_count]]->value = $jmp;
 					$jump_stack[$block_count] = null;
-					$inter_repr = new InterRepr(OP_LABEL, $jmp);
+					array_push($inter_repr_comp, new InterRepr(OP_LABEL, $jmp, $token));
 					break;
 				case KEYWORD_ELIF:
 					if ($do_depth < 1) {
 						echo "[COMPILATION ERROR]: Elif has no condition to close\n" . $token->getTokenInformation() . "\n";
 						exit(1);
 					}
+					$do_depth--;
+					array_push($inter_repr_comp, new InterRepr(OP_ENTER_BLOCK, BLOCK_MULT_BODY_IF, $token));
 					if (!isset($jmp_end_stacks[$block_count])) $jmp_end_stacks[$block_count] = array();
 					array_push($jmp_end_stacks[$block_count], sizeof($inter_repr_comp));
-					array_push($inter_repr_comp, new InterRepr(OP_JMP));
+					array_push($inter_repr_comp, new InterRepr(OP_JMP, null, $token));
 					$jmp = $function_name . "jmp" . $jmp_nb;
 					$jmp_nb++;
 					$inter_repr_comp[$jump_stack[$block_count]]->value = $jmp;
 					$jump_stack[$block_count] = null;
-					$inter_repr = new InterRepr(OP_LABEL, $jmp);
+					array_push($inter_repr_comp, new InterRepr(OP_LABEL, $jmp, $token));
 					$condition_def = true;
 					break;
 				case KEYWORD_SYSCALL0:
-					$inter_repr = new InterRepr(OP_SYSCALL0);
+					array_push($inter_repr_comp, new InterRepr(OP_SYSCALL0, null, $token));
 					break;
 				case KEYWORD_SYSCALL1:
-					$inter_repr = new InterRepr(OP_SYSCALL1);
+					array_push($inter_repr_comp, new InterRepr(OP_SYSCALL1, null, $token));
 					break;
 				case KEYWORD_SYSCALL2:
-					$inter_repr = new InterRepr(OP_SYSCALL2);
+					array_push($inter_repr_comp, new InterRepr(OP_SYSCALL2, null, $token));
 					break;
 				case KEYWORD_SYSCALL3:
-					$inter_repr = new InterRepr(OP_SYSCALL3);
+					array_push($inter_repr_comp, new InterRepr(OP_SYSCALL3, null, $token));
 					break;
 				case KEYWORD_SYSCALL4:
-					$inter_repr = new InterRepr(OP_SYSCALL4);
+					array_push($inter_repr_comp, new InterRepr(OP_SYSCALL4, null, $token));
 					break;
 				case KEYWORD_SYSCALL5:
-					$inter_repr = new InterRepr(OP_SYSCALL5);
+					array_push($inter_repr_comp, new InterRepr(OP_SYSCALL5, null, $token));
 					break;
 				case KEYWORD_SYSCALL6:
-					$inter_repr = new InterRepr(OP_SYSCALL6);
+					array_push($inter_repr_comp, new InterRepr(OP_SYSCALL6, null, $token));
 					break;
 				case KEYWORD_PLUS:
-					$inter_repr = new InterRepr(OP_PLUS);
+					array_push($inter_repr_comp, new InterRepr(OP_PLUS, null, $token));
 					break;
 				case KEYWORD_MINUS:
-					$inter_repr = new InterRepr(OP_MINUS);
+					array_push($inter_repr_comp, new InterRepr(OP_MINUS, null, $token));
 					break;
 				case KEYWORD_MULT:
-					$inter_repr = new InterRepr(OP_MULT);
+					array_push($inter_repr_comp, new InterRepr(OP_MULT, null, $token));
 					break;
 				case KEYWORD_DIVMOD:
-					$inter_repr = new InterRepr(OP_DIVMOD);
+					array_push($inter_repr_comp, new InterRepr(OP_DIVMOD, null, $token));
 					break;
 				case KEYWORD_EQ:
-					$inter_repr = new InterRepr(OP_EQ);
+					array_push($inter_repr_comp, new InterRepr(OP_EQ, null, $token));
 					break;
 				case KEYWORD_DROP:
-					$inter_repr = new InterRepr(OP_DROP);
+					array_push($inter_repr_comp, new InterRepr(OP_DROP, null, $token));
 					break;
 				case KEYWORD_NOT:
-					$inter_repr = new InterRepr(OP_NOT);
+					array_push($inter_repr_comp , new InterRepr(OP_NOT, null, $token));
 					break;
 				case KEYWORD_DUP:
-					$inter_repr = new InterRepr(OP_DUP);
+					array_push($inter_repr_comp, new InterRepr(OP_DUP, null, $token));
 					break;
 				case KEYWORD_SWAP:
-					$inter_repr = new InterRepr(OP_SWAP);
+					array_push($inter_repr_comp, new InterRepr(OP_SWAP, null, $token));
 					break;
 				case KEYWORD_ROT:
-					$inter_repr = new InterRepr(OP_ROT);
+					array_push($inter_repr_comp, new InterRepr(OP_ROT, null, $token));
 					break;
 				case KEYWORD_OVER:
-					$inter_repr = new InterRepr(OP_OVER);
+					array_push($inter_repr_comp, new InterRepr(OP_OVER, null, $token));
 					break;
 				case KEYWORD_STACK_DUMPER:
-					$inter_repr = new InterRepr(OP_STACK_DUMPER);
+					array_push($inter_repr_comp, new InterRepr(OP_STACK_DUMPER, null, $token));
+					break;
 					default:
 					if (isAnInt($token->word)) {
 						if ($in_function_definition) {
@@ -510,7 +545,7 @@
 						}
 						if ($in_function) {
 							$value = (int) $token->word;
-							$inter_repr = new InterRepr(OP_PUSH_INTEGER, $value);
+							array_push($inter_repr_comp, new InterRepr(OP_PUSH_INTEGER, $value, $token));
 						}
 					} else {
 						if ($in_function_definition) {
@@ -555,7 +590,7 @@
 							if ($token->word === "main") $token->word = "_start";
 							$fun = findFunctionByName($functions, $token->word);
 							if($fun !== null) {
-								$inter_repr = new InterRepr(OP_CALL, $token->word);
+								array_push($inter_repr_comp, new InterRepr(OP_CALL, $token->word, $token));
 							} else {
 								echo "[COMPILATION ERROR]: Unknown word\n" . $token->getTokenInformation() . "\n";
 								exit(1);
@@ -565,13 +600,7 @@
 							exit(1);
 						}
 					}
-
 			}
-			if ($inter_repr === null) {
-				echo "[ERROR]: Intermediary representation of token [" . $token->getTokenInformation() . "] is invalid\n";
-				exit(1);
-			}
-			array_push($inter_repr_comp, $inter_repr);
 		}
 		if (findFunctionByName($functions, "_start") === null) {
 			echo "[COMPILATION ERROR]: No entrypoint has been defined, the entrypoint has to be a function called `main`\n";
@@ -589,9 +618,11 @@
 	class InterRepr {
 		public $op_code;
 		public $value;
+		public $token;
 
-		function __construct($op_code, $value=null) {
+		function __construct($op_code, $value, $token) {
 			$this->op_code = $op_code;
+			$this->token = $token;
 			$this->value = $value;
 		}
 	}
@@ -641,10 +672,302 @@
 	}
 
 	function typeChecking($inter_repr) {
-		
+		global $functions;
+
+		$saved_type_stacks = array();
+		$type_stacks = array();
+		$prev_type_stacks = array();
+		$block_stack = array();
+		$function_ret_stack;
+
+		foreach ($inter_repr as $ir) {
+			$token = $ir->token;
+			switch ($ir->op_code) {
+				case OP_STACK_DUMPER:
+					echo "[STACK DUMPER]: The types currently on the stack are:\n" . getHumanReadableTypes($type_stack) . "\n";
+					exit(10);
+					break;
+				case OP_ENTER_BLOCK: // TODO FIXME: Type checking is currently broken and i'm too tired to finish it - sarah, 11 may at 0:41
+					if ($ir->value === BLOCK_IF_WHILE) $prev_type_stack = $type_stack;
+					else if ($ir->value === BLOCK_MULT_BODY_IF) {
+						$size = sizeof($block_stack);
+						$p = array_pop($block_stack);
+						if ($p !== BLOCK_MULT_BODY_IF) {
+							$prev_type_stack = $type_stack;
+							$type_stack = $saved_type_stack;
+						}
+						else if ($prev_type_stack !== $type_stack) {
+							echo "[TYPE-CHECKING ERROR]: Mismatched types in multi body if :\nExpected " . getHumanReadableTypes($prev_type_stack[]) . "\nBut got : " . getHumanReadableTypes($type_stack[]) . "\n" . $token->getTokenInformation() . "\n";
+							exit(1);
+						}
+						$type_stack[$size] = $saved_type_stack[$size];
+					}
+					array_push($block_stack, $ir->value);
+					break;
+				case OP_LEAVE_BLOCK:
+					$b = array_pop($block_stack);
+					if ($b === BLOCK_IF_WHILE) {
+						if ($type_stack[] !== $prev_type_stack[]) {
+							echo "[TYPE-CHECKING ERROR]: Detected changes between before and after an if / while :\nExpected : " . getHumanReadableTypes($prev_type_stack[]) . "\n But got : " . getHumanReadableTypes($type_stack[]) . "\n" . $token->getTokenInformation() . "\n";
+							exit(1);
+						}
+					}
+					break;
+					case OP_FUNCTION:
+					if (TYPE_COUNT !== 3) {
+						echo "[ERROR]: Only 3 types are currently supported, " . TYPE_COUNT . " are defined\n";
+						exit(1);
+					}
+					$type_stack[] = getTypesFromHumanReadable($ir->value->type_stack_in);
+					$function_ret_stack = getTypesFromHumanReadable($ir->value->type_stack_out);
+					break;
+				case OP_PUSH_INTEGER:
+					array_push($type_stack[sizeof($block_stack)], TYPE_INT);
+					break;
+				case OP_RETURN:
+					if ($function_ret_stack !== $type_stack) {
+						echo "[TYPE-CHECKING ERROR]: Mismatched returning types, expected `". getHumanReadableTypes($function_ret_stack) ."` but got `" . getHumanReadableTypes($type_stack) . "`\n" . $token->getTokenInformation() . "\n";
+						exit(1);
+					}
+					break;
+				case OP_CALL:
+					$callfuncdef = findFunctionByName($functions, $ir->value);
+					$callfin = $callfuncdef->type_stack_in;
+					$err = "";
+					$iswrong = false;
+					while (sizeof($callfin) > 0) {
+						$t = array_pop($callfin);
+						if ($t !== TYPE_VOID) {
+							$err . getHumanReadableTypes(array($t));
+							if ($t !== array_pop($type_stack)) {
+								$iswrong = true;
+							}
+						}
+					}
+					if ($iswrong) {
+						echo "[TYPE-CHECKING ERROR]: Function `" . $callfuncdef->value->name . "` expected types `" . getHumanReadableTypes($callfuncdef->type_stack_in) . "` but got `" . $err . "`\n" . $token->getTokenInformation() . "\n";
+						exit(1);
+					}
+					$type_stack = array_merge($type_stack, getTypesFromHumanReadable($callfuncdef->type_stack_out));
+					break;
+				case OP_DO:
+					if (sizeof($type_stack) < 1) {
+						echo "[TYPE-CHECKING ERROR]: Not enough arguments for `do`\n" . $token->getTokenInformation() . "\n";
+					}
+					$t = array_pop($type_stack);
+					if ($t !== TYPE_BOOL) {
+						echo "[TYPE-CHECKING ERROR]: `do` requires a boolean, but got an " . getHumanReadableTypes(array($t)) . "\n" . $token->getTokenInformation() . "\n";
+					}
+					break;
+				case OP_SYSCALL0:
+					if (sizeof($type_stack) < 1) {
+						echo "[TYPE-CHECKING ERROR]: Not enough arguments for `syscall0`\n" . $token->getTokenInformation() . "\n";
+						exit(1);
+					}
+					$t = array_pop($type_stack);
+					if ($t !== TYPE_INT) {
+						echo "[TYPE-CHECKING ERROR]: Argument for `syscall0` needs to be an integer, but got an " . getHumanReadableTypes(array($t)) . "\n" . $token->getTokenInformation() . "\n";
+					}
+					break;
+				case OP_SYSCALL1:
+					if (sizeof($type_stack) < 2) {
+						echo "[TYPE-CHECKING ERROR]: Not enough arguments for `syscall1`\n" . $token->getTokenInformation() . "\n";
+						exit(1);
+					}
+					$t = array_pop($type_stack);
+					if ($t !== TYPE_INT) {
+						echo "[TYPE-CHECKING ERROR]: Argument for `syscall1` needs to be an integer, but got an " . getHumanReadableTypes(array($t)) . "\n" . $token->getTokenInformation() . "\n";
+						exit(1);
+					}
+					array_pop($type_stack);
+					break;
+				case OP_SYSCALL2;
+					if (sizeof($type_stack) < 3) {
+						echo "[TYPE-CHECKING ERROR]: Not enough arguments for `syscall2`\n" . $token->getTokenInformation() . "\n";
+					}
+					$t = array_pop($type_stack);
+					if ($t !== TYPE_INT) {
+						echo "[TYPE-CHECKING ERROR]: First argument for `syscall2` needs to be an integer, but got an " . getHumanReadableTypes(array($t)) . "\n" . $tokan->getTokenInformation() . "\n";
+						exit(1);
+					}
+					array_pop($type_stack);
+					array_pop($type_stack);
+				case OP_SYSCALL3:
+					if (sizeof($type_stack) < 4) {
+						echo "[TYPE-CHECKING ERROR]: Not enough arguments for `syscall3`\n" . $token->getTokenInformation() . "\n";
+						exit(1);
+					}
+					$t = array_pop($type_stack);
+					if ($t !== TYPE_INT) {
+						echo "[TYPE-CHECKING ERROR]: First argument for `syscall3` needs to be an integer, but got an " . getHumanReadableTypes(array($t)) . "\n" . $token->getTokenInformation() . "\n";
+						exit(1);
+					}
+					array_pop($type_stack);
+					array_pop($type_stack);
+					array_pop($type_stack);
+					break;
+				case OP_SYSCALL4:
+					if (sizeof($type_stack) < 5) {
+						echo "[TYPE-CHECKING ERROR]: Not enough arguments for `syscall4`\n" . $token->getTokenInformation() . "\n";
+						exit(1);
+					}
+					$t = array_pop($type_stack);
+					if ($t !== TYPE_INT) {
+						echo "[TYPE-CHECKING ERROR]: First argument for `syscall4` needs to be an integer, but got an " . getHumanReadableTypes(array($t)) . "\n" . $token->getTokenInformation() . "\n";
+						exit(1);
+					}
+					array_pop($type_stack);
+					array_pop($type_stack);
+					array_pop($type_stack);
+					array_pop($type_stack);
+					break;
+				case OP_SYSCALL5:
+					if (sizeof($type_stack) < 6) {
+						echo "[TYPE-CHECKING ERROR]: Not enough arguments for `syscall5`\n" . $token->getTokenInformation() . "\n";
+						exit(1);
+					}
+					$t = array_pop($type_stack);
+					if ($t !== TYPE_INT) {
+						echo "[TYPE-CHECKING ERROR]: First argument for `syscall5` needs to be an integer, but got an " . getHumanReadableTypes(array($t)) . "\n" . $token->getTokenInformation() . "\n";
+						exit(1);
+					}
+					array_pop($type_stack);
+					array_pop($type_stack);
+					array_pop($type_stack);
+					array_pop($type_stack);
+					array_pop($type_stack);
+					break;
+				case OP_SYSCALL6:
+					if (sizeof($type_stack) < 7) {
+						echo "[TYPE-CHECKING ERROR]: Not enough arguments for `syscall6`\n" . $token->getTokenInformation() . "\n";
+						exit(1);
+					}
+					$t = array_pop($type_stack);
+					if ($t !== TYPE_INT) {
+						echo "[TYPE-CHECKING ERROR]: First argument for `syscall6` needs to be an integer, but got an " . getHumanReadableTypes(array($t)) . "\n" . $token->getTokenInformation() . "\n";
+						exit(1);
+					}
+					array_pop($type_stack);
+					array_pop($type_stack);
+					array_pop($type_stack);
+					array_pop($type_stack);
+					array_pop($type_stack);
+					array_pop($type_stack);
+					break;
+				case OP_PLUS:
+				case OP_MINUS:
+				case OP_MULT:
+					if (sizeof($type_stack) < 2) {
+						echo "[TYPE-CHECKING ERROR]: Not enough arguments for `" . $token->word . "`\n" . $token->getTokenInformation() . "\n";
+						exit(1);
+					}
+					$t1 = array_pop($type_stack);
+					$t2 = array_pop($type_stack);
+					if ($t1 !== TYPE_INT || $t2 !== TYPE_INT) {
+						echo "[TYPE-CHECKING ERROR]: Keyword `" . $token->word . "` requires two integers, but got `" . getHumanReadableTypes(array($t1, $t2)) . "`\n" . $token->getTokenInformation() . "\n";
+						exit(1);
+					}
+					array_push($type_stack, TYPE_INT);
+					break;
+				case OP_DIVMOD;
+					if (sizeof($type_stack) < 2) {
+						echo "[TYPE-CHECKING ERROR]: Not enough arguments for `divmod`\n" . $token->getTokenInformation() . "\n";
+						exit(1);
+					}
+					$t1 = array_pop($type_stack);
+					$t2 = array_pop($type_stack);
+					if ($t1 !== TYPE_INT || $t2 !== TYPE_INT) {
+						echo "[TYPE-CHECKING ERROR]: Keyword `divmod` requires two integers, but got `" . getHumanReadableTypes(array($t1, $t2)) . "`\n" . $token->getTokenInformation() . "\n";
+						exit(1);
+					}
+					array_push($type_stack, TYPE_INT);
+					array_push($type_stack, TYPE_INT);
+					break;
+				case OP_EQ:
+					if (sizeof($type_stack) < 2) {
+						echo "[TYPE-CHECKING ERROR]: Not enough arguments for `eq`\n" . $token->getTokenInformation() . "\n";
+						exit(1);
+					}
+					$t1 = array_pop($type_stack);
+					$t2 = array_pop($type_stack);
+					if ($t1 !== TYPE_INT || $t2 !== TYPE_INT) {
+						echo "[TYPE-CHECKING ERROR]: Keyword `eq` requires two integers, but got `" . getHumanReadableTypes(array($t1, $t2)) . "`\n" . $token->getTokenInformation() . "\n";
+						exit(1);
+					}
+					array_push($type_stack, TYPE_BOOL);
+					break;
+				case OP_NOT:
+					if (sizeof($type_stack) < 1) {
+						echo "[TYPE-CHECKING ERROR]: Not enough arguments for `not`\n" . $token->getTokenInformation() . "\n";
+						exit(1);
+					}
+					$t = array_pop($type_stack);
+					if ($t !== TYPE_BOOL) {
+						echo "[TYPE-CHECKING ERROR]: Keyword `not` requires a boolean, but instead got `" . getHumanReadableTypes(array($t)) . "`\n" . $token->getTokenInformation() . "\n";
+						exit(1);
+					}
+					array_push($type_stack, TYPE_BOOL);
+					break;
+				case OP_DROP:
+					if (sizeof($type_stack) < 1) {
+						echo "[TYPE-CHECKING ERROR]: Nothing to drop\n" . $token->getTokenInformation() . "\n";
+						exit(1);
+					}
+					array_pop($type_stack);
+					break;
+				case OP_DUP:
+					if (sizeof($type_stack) < 1) {
+						echo "[TYPE-CHECKING ERROR]: Nothing to duplicate\n" . $token->getTokenInformation() . "\n";
+						exit(1);
+					}
+					$t = array_pop($type_stack);
+					array_push($type_stack, $t);
+					array_push($type_stack, $t);
+					break;
+				case OP_LABEL:
+				case OP_JMP:
+					break;
+				default:
+					echo "[ERROR]: Unhandled op_code : " . $ir->op_code . "\n";
+					exit(69);
+			}
+		}
+	}
+
+	function getTypesFromHumanReadable($types) {
+		$ret = array();
+		foreach ($types as $type) {
+			if ($type === "void");
+			else if ($type === "int") array_push($ret, TYPE_INT);
+			else if ($type === "bool") array_push($ret, TYPE_BOOL);
+			else {
+				echo "[ERROR]: Unhandled type : " . $type . "\n";
+				exit(69);
+			}
+		}
+		return $ret;
+	}
+
+	function getHumanReadableTypes($type_stack) {
+		$ret = "";
+		foreach($type_stack as $type) {
+			if ($type === TYPE_VOID) $ret = $ret . " void";
+			else if ($type === TYPE_INT) $ret = $ret . " int";
+			else if ($type === TYPE_BOOL) $ret = $ret . " bool";
+			else {
+				echo "[ERROR]: Unhandled type number : " . $type . "\n";
+				exit(69);
+			}
+		}
+		if ($ret === "") $ret = "void";
+		return $ret;
 	}
 
 	function generate($inter_repr) {
+		if (OP_COUNT != 28) {
+			echo "[ERROR]: Unhandled op_code in code generation, there are now " . OP_COUNT . " op_codes\n";
+			exit(127);
+		}
 		$current_function = null;
 		$file = fopen("output.asm", "w") or die ("[ERROR]: Unable to open the output file\n");
 		fwrite($file, "BITS 64\n");
@@ -654,7 +977,7 @@
 			switch ($operation->op_code) {
 				case OP_FUNCTION:
 					fwrite($file, "\t;; OP_FUNCTION\n");
-					fwrite($file, "\t" . $operation->value->name . ":\n");
+					fwrite($file, $operation->value->name . ":\n");
 					if ($operation->value->name !== "_start") fwrite($file, "\tpop r15\n"); // Pop function return to r15 register
 					break;
 				case OP_RETURN:
@@ -783,7 +1106,7 @@
 					break;
 				case OP_DIVMOD:
 					fwrite($file, "\t;; OP_DIVMOD\n");
-					fwrite($file, "\tmov rdi, 0\n");
+					fwrite($file, "\tmov rdx, 0\n");
 					fwrite($file, "\tpop rdi\n");
 					fwrite($file, "\tpop rax\n");
 					fwrite($file, "\tdiv rdi\n");
