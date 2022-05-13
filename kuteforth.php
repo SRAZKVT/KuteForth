@@ -95,12 +95,23 @@
 			exit(1);
 		}
 		$basename = basename($filepath, ".kf");
-		echo "[INFO]: Parsing tokens\n";
+		$ts = microtime(true);
 		$tokens = getTokens($filepath);
-		echo "[INFO]: Translating to intermediary representation and type-checking\n";
+		$te = microtime(true);
+		$t = $te - $ts;
+		echo "[INFO]: Seperating words took {$t}s\n";
+		
+		$ts = microtime(true);
 		$inter_repr = getInterRepr($tokens);
+		$te = microtime(true);
+		$t = $te - $ts;
+		echo "[INFO]: Parsing tokens took {$t}s\n";
 
+		$ts = microtime(true);
 		typeChecking($inter_repr);
+		$te = microtime(true);
+		$t = $te - $ts;
+		echo "[INFO]: Type-checking took {$t}s\n";
 
 		// TODO: DCE
 
@@ -202,13 +213,17 @@
 			exit(0);
 		}
 
-		echo "[Info]: Generation\n";
-		generate($inter_repr);
 
+		$ts = microtime(true);
+		generate($inter_repr);
 		$nasm = shell_exec("nasm -f elf64 output.asm -o output.o");
 		$ld = shell_exec("ld -e _start -o output output.o");
 		rename("output", $basename);
 		unlink("output.o");
+		$te = microtime(true);
+		$t = $te - $ts;
+		echo "[INFO]: Generation took {$t}s\n";
+								
 		if ($autorun) {
 			echo "[Info]: Running the program\n";
 			$exit_code = 0;
@@ -671,14 +686,24 @@
 		return true;
 	}
 
+	function typeCheckError($reason, $info) {
+		echo "[TYPE-CHECKING ERROR]: " . $reason . "\n";
+		echo $info . "\n";
+		exit(1);
+	}
+
+	function todo($message) {
+		echo "[TODO]: " . $message . "\n";
+		exit(1);
+	}
+
 	function typeChecking($inter_repr) {
 		global $functions;
 
-		$saved_type_stacks = array();
-		$type_stacks = array();
-		$prev_type_stacks = array();
+		$type_stack = array();
+		$prev_type_stack = array();
 		$block_stack = array();
-		$function_ret_stack;
+		$function_ret_stack = array();
 
 		foreach ($inter_repr as $ir) {
 			$token = $ir->token;
@@ -687,245 +712,113 @@
 					echo "[STACK DUMPER]: The types currently on the stack are:\n" . getHumanReadableTypes($type_stack) . "\n";
 					exit(10);
 					break;
-				case OP_ENTER_BLOCK: // TODO FIXME: Type checking is currently broken and i'm too tired to finish it - sarah, 11 may at 0:41
-					if ($ir->value === BLOCK_IF_WHILE) $prev_type_stack = $type_stack;
-					else if ($ir->value === BLOCK_MULT_BODY_IF) {
-						$size = sizeof($block_stack);
-						$p = array_pop($block_stack);
-						if ($p !== BLOCK_MULT_BODY_IF) {
-							$prev_type_stack = $type_stack;
-							$type_stack = $saved_type_stack;
-						}
-						else if ($prev_type_stack !== $type_stack) {
-							echo "[TYPE-CHECKING ERROR]: Mismatched types in multi body if :\nExpected " . getHumanReadableTypes($prev_type_stack[]) . "\nBut got : " . getHumanReadableTypes($type_stack[]) . "\n" . $token->getTokenInformation() . "\n";
-							exit(1);
-						}
-						$type_stack[$size] = $saved_type_stack[$size];
+				case OP_ENTER_BLOCK:
+					if ($ir->value == BLOCK_FUNC) {
+						array_push($block_stack, BLOCK_FUNC);
+					} else {
+						todo("not implemented enter block");
 					}
-					array_push($block_stack, $ir->value);
 					break;
 				case OP_LEAVE_BLOCK:
 					$b = array_pop($block_stack);
-					if ($b === BLOCK_IF_WHILE) {
-						if ($type_stack[] !== $prev_type_stack[]) {
-							echo "[TYPE-CHECKING ERROR]: Detected changes between before and after an if / while :\nExpected : " . getHumanReadableTypes($prev_type_stack[]) . "\n But got : " . getHumanReadableTypes($type_stack[]) . "\n" . $token->getTokenInformation() . "\n";
-							exit(1);
-						}
+					if ($b === BLOCK_FUNC) {
+						// do things
+					} else {
+						todo("not implemented leave block");
 					}
 					break;
-					case OP_FUNCTION:
-					if (TYPE_COUNT !== 3) {
-						echo "[ERROR]: Only 3 types are currently supported, " . TYPE_COUNT . " are defined\n";
-						exit(1);
-					}
-					$type_stack[] = getTypesFromHumanReadable($ir->value->type_stack_in);
-					$function_ret_stack = getTypesFromHumanReadable($ir->value->type_stack_out);
+				case OP_FUNCTION:
+					foreach (getTypesFromHumanReadable($ir->value->type_stack_in) as $t) array_push($type_stack, $t);
+					foreach (getTypesFromHumanReadable($ir->value->type_stack_out) as $t) array_push($function_ret_stack, $t);
 					break;
 				case OP_PUSH_INTEGER:
-					array_push($type_stack[sizeof($block_stack)], TYPE_INT);
+					array_push($type_stack, TYPE_INT);
 					break;
 				case OP_RETURN:
-					if ($function_ret_stack !== $type_stack) {
-						echo "[TYPE-CHECKING ERROR]: Mismatched returning types, expected `". getHumanReadableTypes($function_ret_stack) ."` but got `" . getHumanReadableTypes($type_stack) . "`\n" . $token->getTokenInformation() . "\n";
-						exit(1);
-					}
+					if ($type_stack !== $function_ret_stack) typeCheckError("Mismatched type stacks : expected `" . getHumanReadableTypes($function_ret_stack) . "` but got `" . getHumanReadableTypes($type_stack) . "`", $token->getTokenInformation());
 					break;
 				case OP_CALL:
-					$callfuncdef = findFunctionByName($functions, $ir->value);
-					$callfin = $callfuncdef->type_stack_in;
-					$err = "";
-					$iswrong = false;
-					while (sizeof($callfin) > 0) {
-						$t = array_pop($callfin);
-						if ($t !== TYPE_VOID) {
-							$err . getHumanReadableTypes(array($t));
-							if ($t !== array_pop($type_stack)) {
-								$iswrong = true;
-							}
-						}
+					$savstack = $type_stack;
+					$funcdef = findFunctionByName($functions, $ir->value);
+					$in = getTypesFromHumanReadable($funcdef->type_stack_in);
+					$out = getTypesFromHumanReadable($funcdef->type_stack_out);
+					$e = array_pop($in);
+					while ($e != null) {
+						$t = array_pop($type_stack);
+						if ($t !== $e) typeCheckError("Mismatched type stacks for function call : expected `" . getHumanReadableTypes($e) . "` but got `" . getHumanReadableTypes($savstack) . "`", $token->getTokenInformation());
+						$e = array_pop($in);
 					}
-					if ($iswrong) {
-						echo "[TYPE-CHECKING ERROR]: Function `" . $callfuncdef->value->name . "` expected types `" . getHumanReadableTypes($callfuncdef->type_stack_in) . "` but got `" . $err . "`\n" . $token->getTokenInformation() . "\n";
-						exit(1);
+					$e = array_pop($out);
+					while ($e != null) {
+						array_push($type_stack, $e);
+						$e = array_pop($out);
 					}
-					$type_stack = array_merge($type_stack, getTypesFromHumanReadable($callfuncdef->type_stack_out));
 					break;
 				case OP_DO:
-					if (sizeof($type_stack) < 1) {
-						echo "[TYPE-CHECKING ERROR]: Not enough arguments for `do`\n" . $token->getTokenInformation() . "\n";
-					}
-					$t = array_pop($type_stack);
-					if ($t !== TYPE_BOOL) {
-						echo "[TYPE-CHECKING ERROR]: `do` requires a boolean, but got an " . getHumanReadableTypes(array($t)) . "\n" . $token->getTokenInformation() . "\n";
-					}
+					todo("not implemented do");
 					break;
 				case OP_SYSCALL0:
-					if (sizeof($type_stack) < 1) {
-						echo "[TYPE-CHECKING ERROR]: Not enough arguments for `syscall0`\n" . $token->getTokenInformation() . "\n";
-						exit(1);
-					}
-					$t = array_pop($type_stack);
-					if ($t !== TYPE_INT) {
-						echo "[TYPE-CHECKING ERROR]: Argument for `syscall0` needs to be an integer, but got an " . getHumanReadableTypes(array($t)) . "\n" . $token->getTokenInformation() . "\n";
-					}
+					if (sizeof($type_stack) < 1) typeCheckError("Not enough arguments for OP_SYSCALL0", $token->getTokenInformation());
+					array_pop($type_stack);
 					break;
 				case OP_SYSCALL1:
-					if (sizeof($type_stack) < 2) {
-						echo "[TYPE-CHECKING ERROR]: Not enough arguments for `syscall1`\n" . $token->getTokenInformation() . "\n";
-						exit(1);
-					}
-					$t = array_pop($type_stack);
-					if ($t !== TYPE_INT) {
-						echo "[TYPE-CHECKING ERROR]: Argument for `syscall1` needs to be an integer, but got an " . getHumanReadableTypes(array($t)) . "\n" . $token->getTokenInformation() . "\n";
-						exit(1);
-					}
-					array_pop($type_stack);
+					if (sizeof($type_stack) < 2) typeCheckError("Not enough arguments for OP_SYSCALL1", $token->getTokenInformation());
+					for ($i = 0; $i != 2; $i++) array_pop($type_stack);
 					break;
 				case OP_SYSCALL2;
-					if (sizeof($type_stack) < 3) {
-						echo "[TYPE-CHECKING ERROR]: Not enough arguments for `syscall2`\n" . $token->getTokenInformation() . "\n";
-					}
-					$t = array_pop($type_stack);
-					if ($t !== TYPE_INT) {
-						echo "[TYPE-CHECKING ERROR]: First argument for `syscall2` needs to be an integer, but got an " . getHumanReadableTypes(array($t)) . "\n" . $tokan->getTokenInformation() . "\n";
-						exit(1);
-					}
-					array_pop($type_stack);
-					array_pop($type_stack);
+					if (sizeof($type_stack) < 3) typeCheckError("Not enough arguments for OP_SYSCALL2", $token->getTokenInformation());
+					for ($i = 0; $i != 3; $i++) array_pop($type_stack);
+					break;
 				case OP_SYSCALL3:
-					if (sizeof($type_stack) < 4) {
-						echo "[TYPE-CHECKING ERROR]: Not enough arguments for `syscall3`\n" . $token->getTokenInformation() . "\n";
-						exit(1);
-					}
-					$t = array_pop($type_stack);
-					if ($t !== TYPE_INT) {
-						echo "[TYPE-CHECKING ERROR]: First argument for `syscall3` needs to be an integer, but got an " . getHumanReadableTypes(array($t)) . "\n" . $token->getTokenInformation() . "\n";
-						exit(1);
-					}
-					array_pop($type_stack);
-					array_pop($type_stack);
-					array_pop($type_stack);
+					if (sizeof($type_stack) < 4) typeCheckError("Not enough arguments for OP_SYSCALL3", $token->getTokenInformation());
+					for ($i = 0; $i != 4; $i++) array_pop($type_stack);
 					break;
 				case OP_SYSCALL4:
-					if (sizeof($type_stack) < 5) {
-						echo "[TYPE-CHECKING ERROR]: Not enough arguments for `syscall4`\n" . $token->getTokenInformation() . "\n";
-						exit(1);
-					}
-					$t = array_pop($type_stack);
-					if ($t !== TYPE_INT) {
-						echo "[TYPE-CHECKING ERROR]: First argument for `syscall4` needs to be an integer, but got an " . getHumanReadableTypes(array($t)) . "\n" . $token->getTokenInformation() . "\n";
-						exit(1);
-					}
-					array_pop($type_stack);
-					array_pop($type_stack);
-					array_pop($type_stack);
-					array_pop($type_stack);
+					if (sizeof($type_stack) < 5) typeCheckError("Not enough arguments for OP_SYSCALL4", $token->getTokenInformation());
+					for ($i = 0; $i != 5; $i++) array_pop($type_stack);
 					break;
 				case OP_SYSCALL5:
-					if (sizeof($type_stack) < 6) {
-						echo "[TYPE-CHECKING ERROR]: Not enough arguments for `syscall5`\n" . $token->getTokenInformation() . "\n";
-						exit(1);
-					}
-					$t = array_pop($type_stack);
-					if ($t !== TYPE_INT) {
-						echo "[TYPE-CHECKING ERROR]: First argument for `syscall5` needs to be an integer, but got an " . getHumanReadableTypes(array($t)) . "\n" . $token->getTokenInformation() . "\n";
-						exit(1);
-					}
-					array_pop($type_stack);
-					array_pop($type_stack);
-					array_pop($type_stack);
-					array_pop($type_stack);
-					array_pop($type_stack);
+					if (sizeof($type_stack) < 6) typeCheckError("Not enough arguments for OP_SYSCALL5", $token->getTokenInformation());
+					for ($i = 0; $i != 6; $i++) array_pop($type_stack);
 					break;
 				case OP_SYSCALL6:
-					if (sizeof($type_stack) < 7) {
-						echo "[TYPE-CHECKING ERROR]: Not enough arguments for `syscall6`\n" . $token->getTokenInformation() . "\n";
-						exit(1);
-					}
-					$t = array_pop($type_stack);
-					if ($t !== TYPE_INT) {
-						echo "[TYPE-CHECKING ERROR]: First argument for `syscall6` needs to be an integer, but got an " . getHumanReadableTypes(array($t)) . "\n" . $token->getTokenInformation() . "\n";
-						exit(1);
-					}
-					array_pop($type_stack);
-					array_pop($type_stack);
-					array_pop($type_stack);
-					array_pop($type_stack);
-					array_pop($type_stack);
-					array_pop($type_stack);
+					if (sizeof($type_stack) < 7) typeCheckError("Not enough arguments for OP_SYSCALL6", $token->getTokenInformation());
+					for ($i = 0; $i != 7; $i++) array_pop($type_stack);
 					break;
 				case OP_PLUS:
-				case OP_MINUS:
-				case OP_MULT:
-					if (sizeof($type_stack) < 2) {
-						echo "[TYPE-CHECKING ERROR]: Not enough arguments for `" . $token->word . "`\n" . $token->getTokenInformation() . "\n";
-						exit(1);
-					}
+					if (sizeof($type_stack) < 2) typeCheckError("Not enough arguments for OP_PLUS", $token->getTokenInformation());
 					$t1 = array_pop($type_stack);
 					$t2 = array_pop($type_stack);
-					if ($t1 !== TYPE_INT || $t2 !== TYPE_INT) {
-						echo "[TYPE-CHECKING ERROR]: Keyword `" . $token->word . "` requires two integers, but got `" . getHumanReadableTypes(array($t1, $t2)) . "`\n" . $token->getTokenInformation() . "\n";
-						exit(1);
-					}
-					array_push($type_stack, TYPE_INT);
+					if ($t1 == TYPE_INT && $t2 == TYPE_INT) array_push($type_stack, TYPE_INT);
+					else typeCheckError("Unsupported operation with OP_PLUS : " . getHumanReadableTypes(array($t1, $t2)), $token->getTokenInformation());
+					break;
+				case OP_MINUS:
+					todo("not implemented minus");
+					break;
+				case OP_MULT:
+					todo("not implemented mult");
 					break;
 				case OP_DIVMOD;
-					if (sizeof($type_stack) < 2) {
-						echo "[TYPE-CHECKING ERROR]: Not enough arguments for `divmod`\n" . $token->getTokenInformation() . "\n";
-						exit(1);
-					}
-					$t1 = array_pop($type_stack);
-					$t2 = array_pop($type_stack);
-					if ($t1 !== TYPE_INT || $t2 !== TYPE_INT) {
-						echo "[TYPE-CHECKING ERROR]: Keyword `divmod` requires two integers, but got `" . getHumanReadableTypes(array($t1, $t2)) . "`\n" . $token->getTokenInformation() . "\n";
-						exit(1);
-					}
-					array_push($type_stack, TYPE_INT);
-					array_push($type_stack, TYPE_INT);
+					todo("not implemented divmod");
 					break;
 				case OP_EQ:
-					if (sizeof($type_stack) < 2) {
-						echo "[TYPE-CHECKING ERROR]: Not enough arguments for `eq`\n" . $token->getTokenInformation() . "\n";
-						exit(1);
-					}
-					$t1 = array_pop($type_stack);
-					$t2 = array_pop($type_stack);
-					if ($t1 !== TYPE_INT || $t2 !== TYPE_INT) {
-						echo "[TYPE-CHECKING ERROR]: Keyword `eq` requires two integers, but got `" . getHumanReadableTypes(array($t1, $t2)) . "`\n" . $token->getTokenInformation() . "\n";
-						exit(1);
-					}
-					array_push($type_stack, TYPE_BOOL);
+					todo("not implemented eq");
 					break;
 				case OP_NOT:
-					if (sizeof($type_stack) < 1) {
-						echo "[TYPE-CHECKING ERROR]: Not enough arguments for `not`\n" . $token->getTokenInformation() . "\n";
-						exit(1);
-					}
-					$t = array_pop($type_stack);
-					if ($t !== TYPE_BOOL) {
-						echo "[TYPE-CHECKING ERROR]: Keyword `not` requires a boolean, but instead got `" . getHumanReadableTypes(array($t)) . "`\n" . $token->getTokenInformation() . "\n";
-						exit(1);
-					}
-					array_push($type_stack, TYPE_BOOL);
+					todo("not implemented not");
 					break;
 				case OP_DROP:
-					if (sizeof($type_stack) < 1) {
-						echo "[TYPE-CHECKING ERROR]: Nothing to drop\n" . $token->getTokenInformation() . "\n";
-						exit(1);
-					}
+					if (sizeof($type_stack) < 1) typeCheckError("No elements to drop for OP_DROP", $token->getTokenInformation());
 					array_pop($type_stack);
 					break;
 				case OP_DUP:
-					if (sizeof($type_stack) < 1) {
-						echo "[TYPE-CHECKING ERROR]: Nothing to duplicate\n" . $token->getTokenInformation() . "\n";
-						exit(1);
-					}
-					$t = array_pop($type_stack);
-					array_push($type_stack, $t);
-					array_push($type_stack, $t);
+					todo("not implemented dup");
 					break;
 				case OP_LABEL:
+					todo("not implemented label");
+					break;
 				case OP_JMP:
+					todo("not implemented jmp");
 					break;
 				default:
 					echo "[ERROR]: Unhandled op_code : " . $ir->op_code . "\n";
@@ -959,7 +852,8 @@
 				exit(69);
 			}
 		}
-		if ($ret === "") $ret = "void";
+		if ($ret === "") $ret = " void";
+		$ret = substr($ret, 1);
 		return $ret;
 	}
 
