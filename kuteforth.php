@@ -793,32 +793,80 @@
 					else typeCheckError("Unsupported operation with OP_PLUS : " . getHumanReadableTypes(array($t1, $t2)), $token->getTokenInformation());
 					break;
 				case OP_MINUS:
-					todo("not implemented minus");
+					if (sizeof($type_stack) < 2) typeCheckError("Not enough arguments for OP_MINUS", $token->getTokenInformation());
+					$t1 = array_pop($type_stack);
+					$t2 = array_pop($type_stack);
+					if ($t1 == TYPE_INT && $t2 == TYPE_INT) array_push($type_stack, TYPE_INT);
+					else typeCheckError("Unsupported operation with OP_PLUS : " . getHumanReadableTypes(array($t1, $t2)), $token->getTokenInformation());
 					break;
 				case OP_MULT:
-					todo("not implemented mult");
+					if (sizeof($type_stack) < 2) typeCheckError("Not enough arguments for OP_MULT", $token->getTokenInformation());
+					$t1 = array_pop($type_stack);
+					$t2 = array_pop($type_stack);
+					if ($t1 == TYPE_INT && $t2 == TYPE_INT) array_push($type_stack, TYPE_INT);
+					else typeCheckError("Unsupported operation with OP_MULT : " . getHumanReadableTypes(array($t1, $t2)), $token->getTokenInformation());
 					break;
-				case OP_DIVMOD;
-					todo("not implemented divmod");
+				case OP_DIVMOD:
+					if (sizeof($type_stack) < 2) typeCheckError("Not enough arguments for OP_DIVMOD", $token->getTokenInformation());
+					$t1 = array_pop($type_stack);
+					$t2 = array_pop($type_stack);
+					if ($t1 == TYPE_INT && $t2 == TYPE_INT) {
+						array_push($type_stack, TYPE_INT);
+						array_push($type_stack, TYPE_INT);
+					}
+					else typeCheckError("Unsupported operation with OP_DIVMOD : " . getHumanReadableTypes(array($t1, $t2)), $token->getTokenInformation());
 					break;
 				case OP_EQ:
-					todo("not implemented eq");
+					if (sizeof($type_stack) < 2) typeCheckError("Not enough elements to compare with OP_EQ", $token->getTokenInformation());
+					$t1 = array_pop($type_stack);
+					$t2 = array_pop($type_stack);
+					if ($t1 === $t2) array_push($type_stack, TYPE_BOOL);
+					else typeCheckError("Different types for equality check, requires same type : " . getHumanReadableTypes(array($t1, $t2)), $token->getTokenInformation());
 					break;
 				case OP_NOT:
-					todo("not implemented not");
+					if (sizeof($type_stack) < 1) typeCheckError("No element to invert with OP_NOT", $token->getTokenInformation());
+					$t = array_pop($type_stack);
+					if ($t === TYPE_BOOL) array_push($type_stack, TYPE_BOOL);
+					else typeCheckError("Can only invert the state of a boolean with OP_NOT, instead got `" . getHumanReadableTypes(array($t)) . "`", $token->getTokenInformation());
 					break;
 				case OP_DROP:
 					if (sizeof($type_stack) < 1) typeCheckError("No elements to drop for OP_DROP", $token->getTokenInformation());
 					array_pop($type_stack);
 					break;
 				case OP_DUP:
-					todo("not implemented dup");
+					if (sizeof($type_stack) < 1) typeCheckError("No elements to duplicate for OP_DUP", $token->getTokenInformation());
+					$t = array_pop($type_stack);
+					for ($i = 0; $i < 2; $i++) array_push($type_stack, $t);
+					break;
+				case OP_OVER:
+					if (sizeof($type_stack) < 2) typeCheckError("Not enough elements to jump over for OP_OVER", $token->getTokenInformation());
+					$t1 = array_pop($type_stack);
+					$t2 = array_pop($type_stack);
+					array_push($type_stack, $t2);
+					array_push($type_stack, $t1);
+					array_push($type_stack, $t2);
+					break;
+				case OP_ROT:
+					if (sizeof($type_stack) < 3) typeCheckError("Not enough elements to rotate for OP_ROT", $token->getTokenInformation());
+					$t1 = array_pop($type_stack);
+					$t2 = array_pop($type_stack);
+					$t3 = array_pop($type_stack);
+					array_push($type_stack, $t3);
+					array_push($type_stack, $t1);
+					array_push($type_stack, $t2);
+					break;
+				case OP_SWAP:
+					if (sizeof($type_stack) < 2) typeCheckError("Not enough arguments to swap for OP_SWAP", $token->getTokenInformation());
+					$t1 = array_pop($type_stack);
+					$t2 = array_pop($type_stack);
+					array_push($type_stack, $t1);
+					array_push($type_stack, $t2);
 					break;
 				case OP_LABEL:
-					todo("not implemented label");
+					// afaik there isn't anything here, unless gotos gets added, in which case you should keep state of type stack at current state.
 					break;
 				case OP_JMP:
-					todo("not implemented jmp");
+					// same as above, unless gotos are added, no need to do anything. if gotos are added, need to check if type stack at jump position and at label are identical
 					break;
 				default:
 					echo "[ERROR]: Unhandled op_code : " . $ir->op_code . "\n";
