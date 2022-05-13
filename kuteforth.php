@@ -430,10 +430,12 @@
 						$jmp_nb++;
 						array_push($inter_repr_comp, new InterRepr(OP_LABEL, $jmp, $token));
 						if (isset($jump_stack[$block_count])) $inter_repr_comp[$jump_stack[$block_count]]->value = $jmp;
-						$end = array_pop($jmp_end_stacks[$block_count]);
-						while ($end !== null) {
-							$inter_repr_comp[$end]->value = $jmp;
+						if (isset($jmp_end_stacks[$block_count])) {
 							$end = array_pop($jmp_end_stacks[$block_count]);
+							while ($end !== null) {
+								$inter_repr_comp[$end]->value = $jmp;
+								$end = array_pop($jmp_end_stacks[$block_count]);
+							}
 						}
 						$do_depth--;
 						$block_count--;
@@ -715,6 +717,13 @@
 				case OP_ENTER_BLOCK:
 					if ($ir->value == BLOCK_FUNC) {
 						array_push($block_stack, BLOCK_FUNC);
+					} else if ($ir->value == BLOCK_IF_WHILE) {
+						array_push($block_stack, BLOCK_IF_WHILE);
+					} else if ($ir->value == BLOCK_DO) {
+						array_pop($block_stack);
+						array_push($block_stack, BLOCK_DO);
+						$prev_type_stack = $type_stack;
+						array_pop($prev_type_stack); // remove the boolean from the top of the stack
 					} else {
 						todo("not implemented enter block");
 					}
@@ -723,6 +732,8 @@
 					$b = array_pop($block_stack);
 					if ($b === BLOCK_FUNC) {
 						// do things
+					} else if ($b == BLOCK_DO) {
+						if ($type_stack !== $prev_type_stack) typeCheckError("Mismatched type stacks, got `" . getHumanReadableTypes($type_stack) . "` and `" . getHumanReadableTypes($prev_type_stack) . "`", $token->getTokenInformation());
 					} else {
 						todo("not implemented leave block");
 					}
@@ -755,7 +766,9 @@
 					}
 					break;
 				case OP_DO:
-					todo("not implemented do");
+					if (sizeof($type_stack) < 1) typeCheckError("OP_DO requires a boolean, but got nothing", $token->getTokenInformation());
+					$t = array_pop($type_stack);
+					if ($t !== TYPE_BOOL) typeCheckError("OP_DO requires a boolean, but got an `" . getHumanReadableTypes(array($t)) . "`", $token->getTokenInformation());
 					break;
 				case OP_SYSCALL0:
 					if (sizeof($type_stack) < 1) typeCheckError("Not enough arguments for OP_SYSCALL0", $token->getTokenInformation());
