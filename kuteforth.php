@@ -95,23 +95,27 @@
 			exit(1);
 		}
 		$basename = basename($filepath, ".kf");
+		
 		$ts = microtime(true);
 		$tokens = getTokens($filepath);
 		$te = microtime(true);
 		$t = $te - $ts;
-		echo "[INFO]: Seperating words took {$t}s\n";
-		
+		echo "[INFO]: Separating words took {$t}s\n";
+		$total = $t;
+
 		$ts = microtime(true);
 		$inter_repr = getInterRepr($tokens);
 		$te = microtime(true);
 		$t = $te - $ts;
 		echo "[INFO]: Parsing tokens took {$t}s\n";
+		$total += $t;
 
 		$ts = microtime(true);
 		typeChecking($inter_repr);
 		$te = microtime(true);
 		$t = $te - $ts;
 		echo "[INFO]: Type-checking took {$t}s\n";
+		$total += $t;
 
 		// TODO: DCE
 
@@ -223,7 +227,9 @@
 		$te = microtime(true);
 		$t = $te - $ts;
 		echo "[INFO]: Generation took {$t}s\n";
-								
+		$total += $t;
+		echo "[INFO]: Total took {$t}s\n";
+
 		if ($autorun) {
 			echo "[Info]: Running the program\n";
 			$exit_code = 0;
@@ -719,13 +725,16 @@
 						array_push($block_stack, BLOCK_FUNC);
 					} else if ($ir->value == BLOCK_IF_WHILE) {
 						array_push($block_stack, BLOCK_IF_WHILE);
+					} else if ($ir->value == BLOCK_MULT_BODY_IF) {
+						todo("type checking for not multi body if implemented yet");
 					} else if ($ir->value == BLOCK_DO) {
 						array_pop($block_stack);
 						array_push($block_stack, BLOCK_DO);
-						$prev_type_stack = $type_stack;
-						array_pop($prev_type_stack); // remove the boolean from the top of the stack
+						$sz = sizeof($prev_type_stack);
+						array_push($prev_type_stack, $type_stack);
+						array_pop($prev_type_stack[$sz]);
 					} else {
-						todo("not implemented enter block");
+						todo("This block is not recognised : " . $ir->value);
 					}
 					break;
 				case OP_LEAVE_BLOCK:
@@ -733,14 +742,22 @@
 					if ($b === BLOCK_FUNC) {
 						// do things
 					} else if ($b == BLOCK_DO) {
-						if ($type_stack !== $prev_type_stack) typeCheckError("Mismatched type stacks, got `" . getHumanReadableTypes($type_stack) . "` and `" . getHumanReadableTypes($prev_type_stack) . "`", $token->getTokenInformation());
+						$prev = array_pop($prev_type_stack);
+						if ($type_stack !== $prev) typeCheckError("Mismatched type stacks, got `" . getHumanReadableTypes($type_stack) . "` and `" . getHumanReadableTypes($prev) . "`", $token->getTokenInformation());
+					} else if ($b == BLOCK_MULT_BODY_IF) {
+
+						
+						todo("type checking for multi body if is not implemented yet");
 					} else {
-						todo("not implemented leave block");
+						todo("This block is not recognised : " . $b);
 					}
 					break;
 				case OP_FUNCTION:
+					$type_stack = array();
 					foreach (getTypesFromHumanReadable($ir->value->type_stack_in) as $t) array_push($type_stack, $t);
+					$function_ret_stack = array();
 					foreach (getTypesFromHumanReadable($ir->value->type_stack_out) as $t) array_push($function_ret_stack, $t);
+					
 					break;
 				case OP_PUSH_INTEGER:
 					array_push($type_stack, TYPE_INT);
