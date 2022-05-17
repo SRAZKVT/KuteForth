@@ -726,6 +726,7 @@
 					} else if ($ir->value == BLOCK_IF_WHILE) {
 						array_push($block_stack, BLOCK_IF_WHILE);
 					} else if ($ir->value == BLOCK_MULT_BODY_IF) {
+
 						todo("type checking for not multi body if implemented yet");
 					} else if ($ir->value == BLOCK_DO) {
 						array_pop($block_stack);
@@ -745,7 +746,6 @@
 						$prev = array_pop($prev_type_stack);
 						if ($type_stack !== $prev) typeCheckError("Mismatched type stacks, got `" . getHumanReadableTypes($type_stack) . "` and `" . getHumanReadableTypes($prev) . "`", $token->getTokenInformation());
 					} else if ($b == BLOCK_MULT_BODY_IF) {
-
 						
 						todo("type checking for multi body if is not implemented yet");
 					} else {
@@ -970,9 +970,8 @@
 				case OP_DO:
 					fwrite($file, "\t;;OP_DO\n");
 					fwrite($file, "\tpop rax\n");
-					fwrite($file, "\tmov rdi, 0\n");
-					fwrite($file, "\tcmp rax, rdi\n");
-					fwrite($file, "\tje " . $operation->value . "\n");
+					fwrite($file, "\ttest rax, rax\n");
+					fwrite($file, "\tjz " . $operation->value . "\n");
 					break;
 				case OP_LABEL:
 					fwrite($file, "\t;; OP_LABEL\n");
