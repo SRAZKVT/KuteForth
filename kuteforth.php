@@ -708,6 +708,8 @@
 	function typeChecking($inter_repr) {
 		global $functions;
 
+		$mult_body_if = array();
+		$saved_type_stack = array();
 		$type_stack = array();
 		$prev_type_stack = array();
 		$block_stack = array();
@@ -721,19 +723,26 @@
 					exit(10);
 					break;
 				case OP_ENTER_BLOCK:
-					if ($ir->value == BLOCK_FUNC) {
+					if ($ir->value === BLOCK_FUNC) {
 						array_push($block_stack, BLOCK_FUNC);
-					} else if ($ir->value == BLOCK_IF_WHILE) {
+					} else if ($ir->value === BLOCK_IF_WHILE) {
+						array_push($mult_body_if, false);
 						array_push($block_stack, BLOCK_IF_WHILE);
-					} else if ($ir->value == BLOCK_MULT_BODY_IF) {
-
-						todo("type checking for not multi body if implemented yet");
-					} else if ($ir->value == BLOCK_DO) {
+					} else if ($ir->value === BLOCK_MULT_BODY_IF) {
+						if (array_pop($mult_body_if)) {
+							$prev = array_pop($prev_type_stack);
+							if ($type_stack !== $prev) typeCheckError("Mismatched type stacks : Expected `" . getHumanReadableTypes($prev) . "` but got `" . getHumanReadableTypes($type_stack) . "`", $token->getTokenInformation());
+						}
+						array_push($mult_body_if, true);
+						array_push($prev_type_stack, $type_stack);
+						$type_stack = array_pop($saved_type_stack);
+						//todo("type checking for not multi body if implemented yet");
+					} else if ($ir->value === BLOCK_DO) {
 						array_pop($block_stack);
 						array_push($block_stack, BLOCK_DO);
-						$sz = sizeof($prev_type_stack);
-						array_push($prev_type_stack, $type_stack);
-						array_pop($prev_type_stack[$sz]);
+						$sz = sizeof($saved_type_stack);
+						array_push($saved_type_stack, $type_stack);
+						array_pop($saved_type_stack[$sz]);
 					} else {
 						todo("This block is not recognised : " . $ir->value);
 					}
@@ -743,11 +752,12 @@
 					if ($b === BLOCK_FUNC) {
 						// do things
 					} else if ($b == BLOCK_DO) {
-						$prev = array_pop($prev_type_stack);
-						if ($type_stack !== $prev) typeCheckError("Mismatched type stacks, got `" . getHumanReadableTypes($type_stack) . "` and `" . getHumanReadableTypes($prev) . "`", $token->getTokenInformation());
+						$prev;
+						if (!array_pop($mult_body_if)) $prev = array_pop($saved_type_stack);
+						else $prev = array_pop($prev_type_stack);
+						if ($type_stack !== $prev) typeCheckError("Mismatched type stacks, got `" . getHumanReadableTypes($prev) . "` and `" . getHumanReadableTypes($type_stack) . "`", $token->getTokenInformation());
 					} else if ($b == BLOCK_MULT_BODY_IF) {
-						
-						todo("type checking for multi body if is not implemented yet");
+						// this shouldn't do anything
 					} else {
 						todo("This block is not recognised : " . $b);
 					}
