@@ -743,6 +743,7 @@
 		$prev_type_stack = array();
 		$block_stack = array();
 		$function_ret_stack = array();
+		$do_no_save = false;
 
 		foreach ($inter_repr as $ir) {
 			$token = $ir->token;
@@ -756,6 +757,9 @@
 						array_push($block_stack, BLOCK_FUNC);
 					} else if ($ir->value === BLOCK_WHILE) {
 						array_push($block_stack, BLOCK_WHILE);
+						echo getHumanReadableTypes($type_stack) . "\n";
+						$do_no_save = true;
+						array_push($saved_type_stack, $type_stack);
 					} else if ($ir->value === BLOCK_IF) {
 						array_push($mult_body_if, false);
 						array_push($block_stack, BLOCK_IF);
@@ -771,9 +775,12 @@
 					} else if ($ir->value === BLOCK_DO) {
 						array_pop($block_stack);
 						array_push($block_stack, BLOCK_DO);
-						$sz = sizeof($saved_type_stack);
-						array_push($saved_type_stack, $type_stack);
-						array_pop($saved_type_stack[$sz]);
+						if (!$do_no_save) {
+							$sz = sizeof($saved_type_stack);
+							array_push($saved_type_stack, $type_stack);
+							array_pop($saved_type_stack[$sz]);
+						}
+						$do_no_save = false;
 					} else {
 						todo("This block is not recognised : " . $ir->value);
 					}
@@ -922,9 +929,9 @@
 					$t1 = array_pop($type_stack);
 					$t2 = array_pop($type_stack);
 					$t3 = array_pop($type_stack);
-					array_push($type_stack, $t3);
-					array_push($type_stack, $t1);
 					array_push($type_stack, $t2);
+					array_push($type_stack, $t1);
+					array_push($type_stack, $t3);
 					break;
 				case OP_SWAP:
 					if (sizeof($type_stack) < 2) typeCheckError("Not enough arguments to swap for OP_SWAP", $token->getTokenInformation());
