@@ -89,5 +89,9 @@ end
 ```
 The condition will be reevaluated at each pass, and whenever said condition returns false, then the loop will stop.
 
+## Memory:
+There is currently a static buffer into the compiled programs, of 64kB, of which you can access the begining with `mem_start`. mem_start pushes at the top of the stack a pointer to the begining of that buffer. You can write at a pointer using `<ptr> <value> pwrite`, as well as reading from a pointer with `<ptr> pread`.
+
+
 ## Stack dumper :
 If at one point you are confused or forget what type of elements are onto the stack, you can use the special keyword `???`, which will stop the compiler whenever encountered, and will print the state of the type stack at that position.
