@@ -80,5 +80,14 @@ else
 end
 ```
 
+## Loops:
+There is currently only 1 type of loops, a while loop. It is used as follows :
+```
+while <condition> do
+	// things
+end
+```
+The condition will be reevaluated at each pass, and whenever said condition returns false, then the loop will stop.
+
 ## Stack dumper :
 If at one point you are confused or forget what type of elements are onto the stack, you can use the special keyword `???`, which will stop the compiler whenever encountered, and will print the state of the type stack at that position.

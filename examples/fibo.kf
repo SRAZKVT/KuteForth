@@ -1,0 +1,18 @@
+// TODO: Make this use argv as source number, and output result in another way than exit code
+
+func exit int -- void in
+	60 syscall1
+end
+
+func fibo int -- int in
+	1 plus 0 1
+	while rot 1 minus dup 0 eq not do
+		rot rot
+		swap over plus
+	end
+	drop drop
+end
+
+func main void -- void in
+	8 fibo exit
+end

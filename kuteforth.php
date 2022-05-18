@@ -11,6 +11,7 @@
 	define('KEYWORD_DO', 'do');             iota();
 	define('KEYWORD_ELSE', 'else');         iota();
 	define('KEYWORD_ELIF', 'elif');         iota();
+	define('KEYWORD_WHILE', 'while');       iota();
 	define('KEYWORD_SYSCALL0' ,'syscall0'); iota();
 	define('KEYWORD_SYSCALL1' ,'syscall1'); iota();
 	define('KEYWORD_SYSCALL2' ,'syscall2'); iota();
@@ -68,7 +69,8 @@
 	define('TYPE_COUNT',    iota());
 	$types = array(TYPE_VOID, TYPE_INT, TYPE_BOOL);
 
-	define('BLOCK_IF_WHILE',        iota(true));
+	define('BLOCK_IF',              iota(true));
+	define('BLOCK_WHILE',           iota());
 	define('BLOCK_MULT_BODY_IF',    iota());
 	define('BLOCK_DO',              iota());
 	define('BLOCK_FUNC',            iota());
@@ -316,6 +318,8 @@
 
 		$block_type = array();
 
+		$while_stack = array(); // TODO: This is extremely dirty, atm need to have a new stack for each block created, should refactor to smth that makes more sense.
+		$current_blocks = array();
 		$implemented_functions = array();
 		$in_function_def_in = false;
 		$in_function_definition = false;
@@ -332,7 +336,7 @@
 		$condition_def = false;
 
 
-		if (KEYWORD_COUNT != 26) {
+		if (KEYWORD_COUNT != 27) {
 			echo "[ERROR]: Unhandled keywords, there are now " . KEYWORD_COUNT . "keywords\n";
 			exit(127);
 		}
@@ -401,6 +405,8 @@
 					$jmp_nb = 0;
 					break;
 				case KEYWORD_END_BLOCK:
+					$block = array_pop($current_blocks);
+					if ($block !== BLOCK_WHILE) array_push($current_blocks, $block);
 					if ($block_count < 1) {
 						echo "[COMPILATION ERROR]: End has no block to close\n" . $token->getTokenInformation() . "\n";
 						exit(1);
@@ -433,6 +439,15 @@
 						$in_function_definition = false;
 						$function_name_defined = false;
 						break;
+					} else if ($block === BLOCK_WHILE) {
+						array_push($inter_repr_comp, new InterRepr(OP_JMP, $inter_repr_comp[array_pop($while_stack)]->value, $token));
+						$jmp = $function_name . "jmp" . $jmp_nb;
+						$jmp_nb++;
+						array_push($inter_repr_comp, new InterRepr(OP_LABEL, $jmp, $token));
+
+						if (isset($jump_stack[$block_count])) $inter_repr_comp[$jump_stack[$block_count]]->value = $jmp;
+						
+						$block_count--;
 					} else if ($do_depth > 0) {
 						$jmp = $function_name . "jmp" . $jmp_nb;
 						$jmp_nb++;
@@ -454,7 +469,8 @@
 					array_push($inter_repr_comp, new InterRepr(OP_LEAVE_BLOCK, null, $token));
 					break;
 				case KEYWORD_IF:
-					array_push($inter_repr_comp, new InterRepr(OP_ENTER_BLOCK, BLOCK_IF_WHILE, $token));
+					array_push($current_blocks, BLOCK_IF);
+					array_push($inter_repr_comp, new InterRepr(OP_ENTER_BLOCK, BLOCK_IF, $token));
 					$block_count++;
 					$condition_def = true;
 					continue 2;
@@ -500,6 +516,17 @@
 					$jump_stack[$block_count] = null;
 					array_push($inter_repr_comp, new InterRepr(OP_LABEL, $jmp, $token));
 					$condition_def = true;
+					break;
+				case KEYWORD_WHILE:
+					array_push($current_blocks, BLOCK_WHILE);
+					array_push($inter_repr_comp, new InterRepr(OP_ENTER_BLOCK, BLOCK_WHILE, $token));
+					$jmp = $function_name . "jmp" . $jmp_nb;
+					$jmp_nb++;
+					array_push($while_stack, sizeof($inter_repr_comp));
+					array_push($inter_repr_comp, new InterRepr(OP_LABEL, $jmp, $token));
+					$block_count++;
+					$condition_def = true;
+					continue 2;
 					break;
 				case KEYWORD_SYSCALL0:
 					array_push($inter_repr_comp, new InterRepr(OP_SYSCALL0, null, $token));
@@ -727,9 +754,11 @@
 				case OP_ENTER_BLOCK:
 					if ($ir->value === BLOCK_FUNC) {
 						array_push($block_stack, BLOCK_FUNC);
-					} else if ($ir->value === BLOCK_IF_WHILE) {
+					} else if ($ir->value === BLOCK_WHILE) {
+						array_push($block_stack, BLOCK_WHILE);
+					} else if ($ir->value === BLOCK_IF) {
 						array_push($mult_body_if, false);
-						array_push($block_stack, BLOCK_IF_WHILE);
+						array_push($block_stack, BLOCK_IF);
 					} else if ($ir->value === BLOCK_MULT_BODY_IF) {
 						if (array_pop($mult_body_if)) {
 							$prev = array_pop($prev_type_stack);
