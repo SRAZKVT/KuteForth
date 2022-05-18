@@ -1,0 +1,20 @@
+func printc int -- void in
+	1 swap mem_start swap pwrite mem_start 1 1 syscall3
+end
+
+func main void -- void in
+	72 printc
+	101 printc
+	108 printc
+	108 printc
+	111 printc
+	44 printc
+	32 printc
+	119 printc
+	111 printc
+	114 printc
+	108 printc
+	100 printc
+	33 printc
+	10 printc
+end

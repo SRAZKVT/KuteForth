@@ -4,34 +4,37 @@
 	$functions = array();
 	$constants = array(); // Constants are not implemented yet
 
-	define('KEYWORD_FUNCTION' ,'func');     iota(true);
-	define('KEYWORD_IN_BLOCK' ,'in');       iota();
-	define('KEYWORD_END_BLOCK' ,'end');     iota();
-	define('KEYWORD_IF', 'if');             iota();
-	define('KEYWORD_DO', 'do');             iota();
-	define('KEYWORD_ELSE', 'else');         iota();
-	define('KEYWORD_ELIF', 'elif');         iota();
-	define('KEYWORD_WHILE', 'while');       iota();
-	define('KEYWORD_SYSCALL0' ,'syscall0'); iota();
-	define('KEYWORD_SYSCALL1' ,'syscall1'); iota();
-	define('KEYWORD_SYSCALL2' ,'syscall2'); iota();
-	define('KEYWORD_SYSCALL3' ,'syscall3'); iota();
-	define('KEYWORD_SYSCALL4' ,'syscall4'); iota();
-	define('KEYWORD_SYSCALL5' ,'syscall5'); iota();
-	define('KEYWORD_SYSCALL6' ,'syscall6'); iota();
-	define('KEYWORD_PLUS', 'plus');         iota();
-	define('KEYWORD_MINUS', 'minus');       iota();
-	define('KEYWORD_MULT', 'mult');         iota();
-	define('KEYWORD_DIVMOD', 'divmod');     iota();
-	define('KEYWORD_EQ', 'eq');             iota();
-	define('KEYWORD_NOT', 'not');           iota();
-	define('KEYWORD_DROP', 'drop');         iota();
-	define('KEYWORD_DUP', 'dup');           iota();
-	define('KEYWORD_SWAP','swap');          iota();
-	define('KEYWORD_ROT', 'rot');           iota();
-	define('KEYWORD_OVER', 'over');         iota();
-	define('KEYWORD_STACK_DUMPER', '???');  iota();
-	define('KEYWORD_COUNT',                 iota());
+	define('KEYWORD_FUNCTION' ,'func');          iota(true);
+	define('KEYWORD_IN_BLOCK' ,'in');            iota();
+	define('KEYWORD_END_BLOCK' ,'end');          iota();
+	define('KEYWORD_IF', 'if');                  iota();
+	define('KEYWORD_DO', 'do');                  iota();
+	define('KEYWORD_ELSE', 'else');              iota();
+	define('KEYWORD_ELIF', 'elif');              iota();
+	define('KEYWORD_WHILE', 'while');            iota();
+	define('KEYWORD_SYSCALL0' ,'syscall0');      iota();
+	define('KEYWORD_SYSCALL1' ,'syscall1');      iota();
+	define('KEYWORD_SYSCALL2' ,'syscall2');      iota();
+	define('KEYWORD_SYSCALL3' ,'syscall3');      iota();
+	define('KEYWORD_SYSCALL4' ,'syscall4');      iota();
+	define('KEYWORD_SYSCALL5' ,'syscall5');      iota();
+	define('KEYWORD_SYSCALL6' ,'syscall6');      iota();
+	define('KEYWORD_PLUS', 'plus');              iota();
+	define('KEYWORD_MINUS', 'minus');            iota();
+	define('KEYWORD_MULT', 'mult');              iota();
+	define('KEYWORD_DIVMOD', 'divmod');          iota();
+	define('KEYWORD_EQ', 'eq');                  iota();
+	define('KEYWORD_NOT', 'not');                iota();
+	define('KEYWORD_DROP', 'drop');              iota();
+	define('KEYWORD_DUP', 'dup');                iota();
+	define('KEYWORD_SWAP','swap');               iota();
+	define('KEYWORD_ROT', 'rot');                iota();
+	define('KEYWORD_OVER', 'over');              iota();
+	define('KEYWORD_STACK_DUMPER', '???');       iota();
+	define('KEYWORD_MEM_START', 'mem_start');    iota();
+	define('KEYWORD_PWRITE', 'pwrite');          iota();
+	define('KEYWORD_PREAD', 'pread');            iota();
+	define('KEYWORD_COUNT',                      iota());
 
 	define('OP_FUNCTION',       iota(true));
 	define('OP_RETURN',         iota());
@@ -61,13 +64,17 @@
 	define('OP_STACK_DUMPER',   iota());
 	define('OP_ENTER_BLOCK',    iota());
 	define('OP_LEAVE_BLOCK',    iota());
+	define('OP_PUSH_PTR',       iota());
+	define('OP_PWRITE',         iota());
+	define('OP_PREAD',          iota());
 	define('OP_COUNT',          iota());
 
 	define('TYPE_VOID',     'void');    iota(true);
 	define('TYPE_INT',      'int');     iota();
 	define('TYPE_BOOL',     'bool');    iota();
+	define('TYPE_PTR',      'ptr');     iota();
 	define('TYPE_COUNT',    iota());
-	$types = array(TYPE_VOID, TYPE_INT, TYPE_BOOL);
+	$types = array(TYPE_VOID, TYPE_INT, TYPE_BOOL, TYPE_PTR);
 
 	define('BLOCK_IF',              iota(true));
 	define('BLOCK_WHILE',           iota());
@@ -75,7 +82,8 @@
 	define('BLOCK_DO',              iota());
 	define('BLOCK_FUNC',            iota());
 
-	define('CALL_STACK_SIZE', 512 * 8);
+	define('CALL_STACK_SIZE', 512);
+	define('STATIC_BUFFER_SIZE', 64000);
 
 	main($argv);
 
@@ -123,7 +131,7 @@
 
 		// TODO: DCE
 
-		if (OP_COUNT != 28) {
+		if (OP_COUNT != 31) {
 			echo "[ERROR]: Unhandled op_codes in dump, there are now " . OP_COUNT . "\n";
 			exit(127);
 		}
@@ -143,6 +151,12 @@
 						break;
 					case OP_PUSH_INTEGER:
 						echo "OP_PUSH_INTEGER : " . $ir->value . "\n";
+						break;
+					case OP_PWRITE:
+						echo "OP_PWRITE\n";
+						break;
+					case OP_PREAD:
+						echo "OP_PREAD\n";
 						break;
 					case OP_CALL:
 						echo "OP_CALL : " . $ir->value . "\n";
@@ -209,6 +223,9 @@
 						break;
 					case OP_OVER:
 						echo "OP_OVER\n";
+						break;
+					case OP_PUSH_PTR:
+						echo "OP_PUSH_PTR" . $ir->value . "\n";
 						break;
 					case OP_ENTER_BLOCK:
 						echo "OP_ENTER_BLOCK\n";
@@ -336,8 +353,8 @@
 		$condition_def = false;
 
 
-		if (KEYWORD_COUNT != 27) {
-			echo "[ERROR]: Unhandled keywords, there are now " . KEYWORD_COUNT . "keywords\n";
+		if (KEYWORD_COUNT != 30) {
+			echo "[ERROR]: Unhandled keywords, there are now (in parsing) " . KEYWORD_COUNT . " keywords\n";
 			exit(127);
 		}
 		foreach ($tokens as $token) {
@@ -585,7 +602,16 @@
 				case KEYWORD_STACK_DUMPER:
 					array_push($inter_repr_comp, new InterRepr(OP_STACK_DUMPER, null, $token));
 					break;
-					default:
+				case KEYWORD_MEM_START:
+					array_push($inter_repr_comp, new InterRepr(OP_PUSH_PTR, "static_buffer", $token));
+					break;
+				case KEYWORD_PWRITE:
+					array_push($inter_repr_comp, new InterRepr(OP_PWRITE, null, $token));
+					break;
+				case KEYWORD_PREAD:
+					array_push($inter_repr_comp, new InterRepr(OP_PREAD, null, $token));
+					break;
+				default:
 					if (isAnInt($token->word)) {
 						if ($in_function_definition) {
 							echo "[COMPILATION ERROR]: Integers are not allowed within function definitions\n" . $token->getTokenInformation() . "\n";
@@ -735,6 +761,7 @@
 	}
 
 	function typeChecking($inter_repr) {
+		if (OP_COUNT !== 31) todo("Unhandled op codes in type checking : there is now " . OP_COUNT);
 		global $functions;
 
 		$mult_body_if = array();
@@ -808,6 +835,21 @@
 					
 					break;
 				case OP_PUSH_INTEGER:
+					array_push($type_stack, TYPE_INT);
+					break;
+				case OP_PUSH_PTR:
+					array_push($type_stack, TYPE_PTR);
+					break;
+				case OP_PWRITE:
+					if (sizeof($type_stack) < 2) typeCheckError("Not enough arguments for OP_PWRITE", $token->getTokenInformation());
+					array_pop($type_stack);
+					$t = array_pop($type_stack);
+					if ($t !== TYPE_PTR) typeCheckError("OP_PWRITE requires a pointer, but instead got a `'" . getHumanReadableTypes(array($t)) . "`", $token->getTokenInformation());
+					break;
+				case OP_PREAD:
+					if (sizeof($type_stack) < 1) typeCheckError("Not enough arguments for OP_PREAD", $token->getTokenInformation());
+					$t = array_pop($type_stack);
+					if ($t !== TYPE_PTR) typeCheckError("OP_PREAD requires a pointer, but instead got a `" . getHumanReadableTypes(array($t)) . "`", $token->getTokenInformation());
 					array_push($type_stack, TYPE_INT);
 					break;
 				case OP_RETURN:
@@ -959,6 +1001,7 @@
 			if ($type === "void");
 			else if ($type === "int") array_push($ret, TYPE_INT);
 			else if ($type === "bool") array_push($ret, TYPE_BOOL);
+			else if ($type === "ptr") array_push($ret, TYPE_PTR);
 			else {
 				echo "[ERROR]: Unhandled type : " . $type . "\n";
 				exit(69);
@@ -973,6 +1016,7 @@
 			if ($type === TYPE_VOID) $ret = $ret . " void";
 			else if ($type === TYPE_INT) $ret = $ret . " int";
 			else if ($type === TYPE_BOOL) $ret = $ret . " bool";
+			else if ($type === TYPE_PTR) $ret = $ret . " ptr";
 			else {
 				echo "[ERROR]: Unhandled type number : " . $type . "\n";
 				exit(69);
@@ -984,7 +1028,7 @@
 	}
 
 	function generate($inter_repr) {
-		if (OP_COUNT != 28) {
+		if (OP_COUNT != 31) {
 			echo "[ERROR]: Unhandled op_code in code generation, there are now " . OP_COUNT . " op_codes\n";
 			exit(127);
 		}
@@ -996,7 +1040,8 @@
 		generateFromIR($inter_repr, $file);
 
 		fwrite($file, "section .bss\n");
-		fwrite($file, "\tcall_stack: resb " . CALL_STACK_SIZE ."\n");
+		fwrite($file, "\tcall_stack: resb " . CALL_STACK_SIZE*8 ."\n");
+		fwrite($file, "\tstatic_buffer: resb " . STATIC_BUFFER_SIZE . "\n");
 		fclose($file);
 	}
 
@@ -1023,6 +1068,23 @@
 				case OP_PUSH_INTEGER:
 					fwrite($file, "\t;; OP_PUSH_INTEGER\n");
 					fwrite($file, "\tmov rax, " . $operation->value . "\n");
+					fwrite($file, "\tpush rax\n");
+					break;
+				case OP_PUSH_PTR:
+					fwrite($file, "\t;; OP_PUSH_PTR\n");
+					fwrite($file, "\tmov rax, " . $operation->value . "\n");
+					fwrite($file, "\tpush rax\n");
+					break;
+				case OP_PWRITE:
+					fwrite($file, "\t;; OP_PWRITE\n");
+					fwrite($file, "\tpop rax\n");
+					fwrite($file, "\tpop rdi\n");
+					fwrite($file, "\tmov [rdi], rax\n");
+					break;
+				case OP_PREAD:
+					fwrite($file, "\t;; OP_PREAD\n");
+					fwrite($file, "\tpop rdi\n");
+					fwrite($file, "\tmov rax, [rdi]\n");
 					fwrite($file, "\tpush rax\n");
 					break;
 				case OP_CALL:
