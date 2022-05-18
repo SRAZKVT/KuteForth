@@ -73,6 +73,8 @@
 	define('BLOCK_DO',              iota());
 	define('BLOCK_FUNC',            iota());
 
+	define('CALL_STACK_SIZE', 512 * 8);
+
 	main($argv);
 
 	function main($argv) {
@@ -955,16 +957,31 @@
 		fwrite($file, "BITS 64\n");
 		fwrite($file, "section .text\n");
 		fwrite($file, "global _start\n");
+		generateFromIR($inter_repr, $file);
+
+		fwrite($file, "section .bss\n");
+		fwrite($file, "\tcall_stack: resb " . CALL_STACK_SIZE ."\n");
+		fclose($file);
+	}
+
+	function generateFromIR($inter_repr, $file) {
 		foreach ($inter_repr as $operation) {
 			switch ($operation->op_code) {
 				case OP_FUNCTION:
 					fwrite($file, "\t;; OP_FUNCTION\n");
 					fwrite($file, $operation->value->name . ":\n");
-					if ($operation->value->name !== "_start") fwrite($file, "\tpop r15\n"); // Pop function return to r15 register
+					if ($operation->value->name !== "_start") {
+						fwrite($file, "\tpop r14\n");
+						fwrite($file, "\tmov [call_stack+r15*8], r14\n");
+						fwrite($file, "\tinc r15\n");
+					}
+					else fwrite($file, "\tmov r15, 0\n");
 					break;
 				case OP_RETURN:
 					fwrite($file, "\t;; OP_RETURN\n");
-					fwrite($file, "\tpush r15\n");
+					fwrite($file, "\tdec r15\n");
+					fwrite($file, "\tmov r14, [call_stack+r15*8]\n");
+					fwrite($file, "\tpush r14\n");
 					fwrite($file, "\tret\n");
 					break;
 				case OP_PUSH_INTEGER:
@@ -1130,7 +1147,6 @@
 					break;
 			} 
 		}
-		fclose($file);
 	}
 
 
