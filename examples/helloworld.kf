@@ -1,25 +1,6 @@
-func pwrite8 ptr int -- void in
-	over pread 4294967040 andi ori pwrite
-end
-
-func ptrinc ptr -- ptr in
-	int 1 plus ptr
-end
+func write int ptr int -- void in 1 syscall3 end
+func prints int ptr -- void in 1 write end
 
 func main void -- void in
-	mem_start dup 72  pwrite8
-	ptrinc    dup 101 pwrite8
-	ptrinc    dup 108 pwrite8
-	ptrinc    dup 108 pwrite8
-	ptrinc    dup 111 pwrite8
-	ptrinc    dup 44  pwrite8
-	ptrinc    dup 32  pwrite8
-	ptrinc    dup 119 pwrite8
-	ptrinc    dup 111 pwrite8
-	ptrinc    dup 114 pwrite8
-	ptrinc    dup 108 pwrite8
-	ptrinc    dup 100 pwrite8
-	ptrinc    dup 33  pwrite8
-	ptrinc        10  pwrite8
-	14 mem_start 1 1 syscall3
+	"Hello, World!\n" prints
 end

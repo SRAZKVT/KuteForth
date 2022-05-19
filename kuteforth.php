@@ -3,6 +3,7 @@
 	$iota = 0;
 	$functions = array();
 	$constants = array(); // Constants are not implemented yet
+	$strings = array();
 
 	define('KEYWORD_FUNCTION' ,'func');          iota(true);
 	define('KEYWORD_IN_BLOCK' ,'in');            iota();
@@ -297,7 +298,12 @@
 		$code = fread($file, filesize($filepath));
 		$lines = explode("\n", $code);
 		$line_place = 0;
+		$count_all_in = false;
 		foreach ($lines as $line) {
+			if ($count_all_in) {
+				echo "[PARSING ERROR]: Unfinished string literal on line " . $line_place . "\n";
+				exit(1);
+			}
 			$prev_slash = false;
 			$line_place++;
 			$char_place = 0;
@@ -305,6 +311,17 @@
 			$current_word = "";
 			foreach ($chars as $c) {
 				$char_place++;
+				if ($c === "\"") {
+					if ($count_all_in) {
+						$count_all_in = false;
+					} else {
+						$count_all_in = true;
+					}
+				}
+				if ($count_all_in) {
+					$current_word = $current_word . $c;
+					continue;
+				}
 				if ($c === "/") {
 					if ($prev_slash) {
 						continue 2;
@@ -354,7 +371,8 @@
 
 	function getInterRepr($tokens) {
 		global $functions;
-		
+		global $strings;
+
 		$inter_repr_comp = array();
 
 		$block_type = array();
@@ -705,6 +723,15 @@
 								array_push($inter_repr_comp, new InterRepr(OP_CALL, $token->word, $token));
 							} else if (isAType($token->word)) {
 								array_push($inter_repr_comp, new InterRepr(OP_CAST, getTypesFromHumanReadable(array($token->word)), $token));
+							} else if (startsWith($token->word, "\"")) {
+								$str = $token->word;
+								$str = substr($str, 1);
+								$str = substr($str, 0, -1);
+								$sz = sizeof($strings);
+								$bytes = getBytes($str);
+								array_push($strings, $bytes);
+								array_push($inter_repr_comp, new InterRepr(OP_PUSH_INTEGER, sizeof($bytes), $token));
+								array_push($inter_repr_comp, new InterRepr(OP_PUSH_PTR, "str" . $sz, $token));
 							} else {
 								echo "[COMPILATION ERROR]: Unknown word\n" . $token->getTokenInformation() . "\n";
 								exit(1);
@@ -752,6 +779,28 @@
 	function findFunctionByName($functions, $name) {
 		foreach ($functions as $f) if ($f->name === $name) return $f;
 		return null;
+	}
+
+	function getBytes($str) {
+		$ret = array();
+		$chars = str_split($str);
+		$escape = false;
+		foreach ($chars as $c) {
+			if ($c === "\\") {
+				if ($escape) array_push($ret, ord("\\"));
+				else $escape = true;
+			} else {
+				if ($escape) {
+					if ($c === "t") array_push($ret, ord("\t"));
+					else if ($c === "n") array_push($ret, ord("\n"));
+					else {
+						echo "[COMPILATION ERROR]:Unescapable character : " . $c . "\n";
+						exit(1);
+					}
+				} else array_push($ret, ord($c));
+			}
+		}
+		return $ret;
 	}
 
 	function isAnInt($val) {
@@ -820,7 +869,6 @@
 						array_push($block_stack, BLOCK_FUNC);
 					} else if ($ir->value === BLOCK_WHILE) {
 						array_push($block_stack, BLOCK_WHILE);
-						echo getHumanReadableTypes($type_stack) . "\n";
 						$do_no_save = true;
 						array_push($saved_type_stack, $type_stack);
 					} else if ($ir->value === BLOCK_IF) {
@@ -1098,6 +1146,8 @@
 	}
 
 	function generate($inter_repr) {
+		global $strings;
+
 		if (OP_COUNT != 36) {
 			echo "[ERROR]: Unhandled op_code in code generation, there are now " . OP_COUNT . " op_codes\n";
 			exit(127);
@@ -1112,6 +1162,12 @@
 		fwrite($file, "section .bss\n");
 		fwrite($file, "\tcall_stack: resb " . CALL_STACK_SIZE*8 ."\n");
 		fwrite($file, "\tstatic_buffer: resb " . STATIC_BUFFER_SIZE . "\n");
+		fwrite($file, "section .data\n");
+		$i = 0;
+		foreach ($strings as $str) {
+			fwrite($file, "str" . $i . ": db " . implode(", ", $str));
+			$i++;
+		}
 		fclose($file);
 	}
 
@@ -1370,9 +1426,8 @@
 	/**
 	* Returns true if the string specified in $str starts with $start, and false otherwise
 	*/
-	function startsWith($str, $start) {
-		$start_len = strlen($start);
-		return $start_len > 0 ? $start  . substr($str, $start_len) === $str: true;
+	function startsWith ($str, $start) {
+		  return strpos($str , $start) === 0;
 	}
 
 	/**
