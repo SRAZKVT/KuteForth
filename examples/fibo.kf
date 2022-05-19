@@ -1,7 +1,34 @@
-// TODO: Make this use argv as source number, and output result in another way than exit code
+// TODO: Make amount of numbers to check amount specified in argv
 
-func exit int -- void in
-	60 syscall1
+func pread8 ptr -- int in pread 255 andi end
+func pwrite8 ptr int -- void in over pread 4294967040 andi ori pwrite end
+func ptrinc ptr -- ptr in int 1 plus ptr end
+func ptrdec ptr -- ptr in int 1 minus ptr end
+
+func reverse_str int ptr -- void in
+	over over int plus 1 minus ptr
+	while over int over int gt not do
+		over over over over pread8 swap pread8
+		swap rot rot pwrite8 pwrite8
+		ptrdec swap ptrinc swap
+	end drop drop drop
+end
+
+func write int ptr int -- void in 1 syscall3 end
+func prints int ptr -- void in 1 write end
+
+func printu int -- void in
+	1 swap mem_start swap
+	if dup 0 eq do
+		over 48 pwrite8 swap ptrinc swap rot 1 plus rot rot
+	end
+	while dup 0 eq not do
+		10 divmod swap 48 plus
+		rot dup rot pwrite8 ptrinc swap
+		rot 1 plus rot rot
+	end drop drop
+	mem_start over swap reverse_str
+	mem_start prints
 end
 
 func fibo int -- int in
@@ -14,5 +41,11 @@ func fibo int -- int in
 end
 
 func main void -- void in
-	8 fibo exit
+	0
+	while dup 10 lt do
+		dup fibo printu
+		mem_start 10 pwrite
+		1 mem_start prints
+		1 plus
+	end drop
 end
