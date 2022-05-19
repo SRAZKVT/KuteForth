@@ -39,6 +39,8 @@
 	define('KEYWORD_MEM_START', 'mem_start');    iota();
 	define('KEYWORD_PWRITE', 'pwrite');          iota();
 	define('KEYWORD_PREAD', 'pread');            iota();
+	define('KEYWORD_ARGC', 'argc');              iota();
+	define('KEYWORD_ARGV', 'argv');              iota();
 	define('KEYWORD_COUNT',                      iota());
 
 	define('OP_FUNCTION',       iota(true));
@@ -77,6 +79,8 @@
 	define('OP_PWRITE',         iota());
 	define('OP_PREAD',          iota());
 	define('OP_CAST',           iota());
+	define('OP_ARGC',           iota());
+	define('OP_ARGV',           iota());
 	define('OP_COUNT',          iota());
 
 	define('TYPE_VOID',     'void');    iota(true);
@@ -141,7 +145,7 @@
 
 		// TODO: DCE
 
-		if (OP_COUNT != 36) {
+		if (OP_COUNT != 38) {
 			echo "[ERROR]: Unhandled op_codes in dump, there are now " . OP_COUNT . "\n";
 			exit(127);
 		}
@@ -251,6 +255,12 @@
 						break;
 					case OP_CAST:
 						echo "OP_CAST " . getHumanReadableTypes(array($ir->value)) . "\n";
+						break;
+					case OP_ARGC:
+						echo "OP_ARGC\n";
+						break;
+					case OP_ARGV:
+						echo "OP_ARGV\n";
 						break;
 					case OP_ENTER_BLOCK:
 						echo "OP_ENTER_BLOCK\n";
@@ -395,7 +405,7 @@
 		$condition_def = false;
 
 
-		if (KEYWORD_COUNT != 34) {
+		if (KEYWORD_COUNT != 36) {
 			echo "[ERROR]: Unhandled keywords, there are now (in parsing) " . KEYWORD_COUNT . " keywords\n";
 			exit(127);
 		}
@@ -663,6 +673,12 @@
 				case KEYWORD_PREAD:
 					array_push($inter_repr_comp, new InterRepr(OP_PREAD, null, $token));
 					break;
+				case KEYWORD_ARGC:
+					array_push($inter_repr_comp, new InterRepr(OP_ARGC, null, $token));
+					break;
+				case KEYWORD_ARGV:
+					array_push($inter_repr_comp, new InterRepr(OP_ARGV, null, $token));
+					break;
 				default:
 					if (isAnInt($token->word)) {
 						if ($in_function_definition) {
@@ -846,7 +862,7 @@
 	}
 
 	function typeChecking($inter_repr) {
-		if (OP_COUNT !== 36) todo("Unhandled op codes in type checking : there is now " . OP_COUNT);
+		if (OP_COUNT !== 38) todo("Unhandled op codes in type checking : there is now " . OP_COUNT);
 		global $functions;
 
 		$mult_body_if = array();
@@ -1100,6 +1116,15 @@
 					if ($t === $ir->value[0]) echo "[WARNING]: Casting top element on the stack is already of type `" . getHumanReadableTypes(array($t)) . "`\n" . $token->getTokenInformation() . "\n";
 					array_push($type_stack, $ir->value[0]);
 					break;
+				case OP_ARGC:
+					array_push($type_stack, TYPE_INT);
+					break;
+				case OP_ARGV:
+					if (sizeof($type_stack) < 1) typeCheckError("Not referenced argument has been given", $token->getTokenInformation());
+					$t = array_pop($type_stack);
+					if ($t !== TYPE_INT) typeCheckError("OP_ARGV expected `int`, but got `" . getHumanReadableTypes(array($t)) . "`", $token->getTokenInformation());
+					array_push($type_stack, TYPE_PTR);
+					break;
 				case OP_LABEL:
 					// afaik there isn't anything here, unless gotos gets added, in which case you should keep state of type stack at current state.
 					break;
@@ -1148,7 +1173,7 @@
 	function generate($inter_repr) {
 		global $strings;
 
-		if (OP_COUNT != 36) {
+		if (OP_COUNT != 38) {
 			echo "[ERROR]: Unhandled op_code in code generation, there are now " . OP_COUNT . " op_codes\n";
 			exit(127);
 		}
@@ -1162,10 +1187,11 @@
 		fwrite($file, "section .bss\n");
 		fwrite($file, "\tcall_stack: resb " . CALL_STACK_SIZE*8 ."\n");
 		fwrite($file, "\tstatic_buffer: resb " . STATIC_BUFFER_SIZE . "\n");
+		fwrite($file, "\targs: resb 8\n");
 		fwrite($file, "section .data\n");
 		$i = 0;
 		foreach ($strings as $str) {
-			fwrite($file, "str" . $i . ": db " . implode(", ", $str));
+			fwrite($file, "str" . $i . ": db " . implode(", ", $str) . "\n");
 			$i++;
 		}
 		fclose($file);
@@ -1402,6 +1428,17 @@
 					fwrite($file, "\tpush rdi\n");
 					fwrite($file, "\tpush rax\n");
 					fwrite($file, "\tpush rdi\n");
+					break;
+				case OP_ARGC:
+					fwrite($file, "\t;; OP_ARGC\n");
+					fwrite($file, "\tmov rax, [args]\n");
+					fwrite($file, "\tpush rax\n");
+					break;
+				case OP_ARGV:
+					fwrite($file, "\t;; OP_ARGV\n");
+					fwrite($file, "\tpop rdi\n");
+					fwrite($file, "\tmov rax, [args+8+8*rdi]\n");
+					fwrite($file, "\tpush rax\n");
 					break;
 			} 
 		}
