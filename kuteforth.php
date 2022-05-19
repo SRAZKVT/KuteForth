@@ -23,6 +23,8 @@
 	define('KEYWORD_MINUS', 'minus');            iota();
 	define('KEYWORD_MULT', 'mult');              iota();
 	define('KEYWORD_DIVMOD', 'divmod');          iota();
+	define('KEYWORD_AND_INTEGER', 'andi');       iota();
+	define('KEYWORD_OR_INTEGER', 'ori');         iota();
 	define('KEYWORD_EQ', 'eq');                  iota();
 	define('KEYWORD_NOT', 'not');                iota();
 	define('KEYWORD_DROP', 'drop');              iota();
@@ -54,6 +56,8 @@
 	define('OP_MINUS',          iota());
 	define('OP_MULT',           iota());
 	define('OP_DIVMOD',         iota());
+	define('OP_AND_INTEGER',    iota());
+	define('OP_OR_INTEGER',     iota());
 	define('OP_EQ',             iota());
 	define('OP_NOT',            iota());
 	define('OP_DROP',           iota());
@@ -132,7 +136,7 @@
 
 		// TODO: DCE
 
-		if (OP_COUNT != 32) {
+		if (OP_COUNT != 34) {
 			echo "[ERROR]: Unhandled op_codes in dump, there are now " . OP_COUNT . "\n";
 			exit(127);
 		}
@@ -203,6 +207,12 @@
 						break;
 					case OP_DIVMOD:
 						echo "OP_DIVMOD\n";
+						break;
+					case OP_AND_INTEGER:
+						echo "OP_AND_INTEGER\n";
+						break;
+					case OP_OR_INTEGER:
+						echo "OP_OR_INTEGER\n";
 						break;
 					case OP_EQ:
 						echo "OP_EQ\n";
@@ -357,7 +367,7 @@
 		$condition_def = false;
 
 
-		if (KEYWORD_COUNT != 30) {
+		if (KEYWORD_COUNT != 32) {
 			echo "[ERROR]: Unhandled keywords, there are now (in parsing) " . KEYWORD_COUNT . " keywords\n";
 			exit(127);
 		}
@@ -582,6 +592,12 @@
 				case KEYWORD_DIVMOD:
 					array_push($inter_repr_comp, new InterRepr(OP_DIVMOD, null, $token));
 					break;
+				case KEYWORD_AND_INTEGER:
+					array_push($inter_repr_comp, new InterRepr(OP_AND_INTEGER, null, $token));
+					break;
+				case KEYWORD_OR_INTEGER:
+					array_push($inter_repr_comp, new InterRepr(OP_OR_INTEGER, null, $token));
+					break;
 				case KEYWORD_EQ:
 					array_push($inter_repr_comp, new InterRepr(OP_EQ, null, $token));
 					break;
@@ -767,7 +783,7 @@
 	}
 
 	function typeChecking($inter_repr) {
-		if (OP_COUNT !== 32) todo("Unhandled op codes in type checking : there is now " . OP_COUNT);
+		if (OP_COUNT !== 34) todo("Unhandled op codes in type checking : there is now " . OP_COUNT);
 		global $functions;
 
 		$mult_body_if = array();
@@ -942,6 +958,20 @@
 					}
 					else typeCheckError("Unsupported operation with OP_DIVMOD : " . getHumanReadableTypes(array($t1, $t2)), $token->getTokenInformation());
 					break;
+				case OP_AND_INTEGER:
+					if (sizeof($type_stack) < 2) typeCheckError("Not enough arguments for OP_AND_INTEGER", $token->getTokenInformation());
+					$t1 = array_pop($type_stack);
+					$t2 = array_pop($type_stack);
+					if ($t1 !== TYPE_INT || $t2 !== TYPE_INT) typeCheckError("Unsupported operation with OP_AND_INTEGER : " . getHumanReadableTypes(array($t1, $t2)), $token->getTokenInformation());
+					array_push($type_stack, TYPE_INT);
+					break;
+				case OP_OR_INTEGER:
+					if (sizeof($type_stack) < 2) typeCheckError("Not enough arguments for OP_OR_INTEGER", $token->getTokenInformation());
+					$t1 = array_pop($type_stack);
+					$t2 = array_pop($type_stack);
+					if ($t1 !== TYPE_INT || $t2 !== TYPE_INT) typeCheckError("Unsupported operation with OP_OR_INTEGER : " . getHumanReadableTypes(array($t1, $t2)), $token->getTokenInformation());
+					array_push($type_stack, TYPE_INT);
+					break;
 				case OP_EQ:
 					if (sizeof($type_stack) < 2) typeCheckError("Not enough elements to compare with OP_EQ", $token->getTokenInformation());
 					$t1 = array_pop($type_stack);
@@ -990,7 +1020,8 @@
 					break;
 				case OP_CAST:
 					if (sizeof($type_stack) < 1) typeCheckError("Nothing to case by OP_CAST", $token->getTokenInformation());
-					array_pop($type_stack);
+					$t = array_pop($type_stack);
+					if ($t === $ir->value[0]) echo "[WARNING]: Casting top element on the stack is already of type `" . getHumanReadableTypes(array($t)) . "`\n" . $token->getTokenInformation() . "\n";
 					array_push($type_stack, $ir->value[0]);
 					break;
 				case OP_LABEL:
@@ -1039,7 +1070,7 @@
 	}
 
 	function generate($inter_repr) {
-		if (OP_COUNT != 32) {
+		if (OP_COUNT != 34) {
 			echo "[ERROR]: Unhandled op_code in code generation, there are now " . OP_COUNT . " op_codes\n";
 			exit(127);
 		}
@@ -1220,6 +1251,20 @@
 					fwrite($file, "\tpush rdx\n");
 					fwrite($file, "\tpush rax\n");
 					break;
+				case OP_AND_INTEGER:
+					fwrite($file, "\t;; OP_AND_INTEGER\n");
+					fwrite($file, "\tpop rax\n");
+					fwrite($file, "\tpop rdi\n");
+					fwrite($file, "\tand rax, rdi\n");
+					fwrite($file, "\tpush rax\n");
+					break;
+				case OP_OR_INTEGER:
+					fwrite($file, "\t;; OP_OR_INTEGER\n");
+					fwrite($file, "\tpop rax\n");
+					fwrite($file, "\tpop rdi\n");
+					fwrite($file, "\tor rax, rdi\n");
+					fwrite($file, "\tpush rax\n");
+					break;
 				case OP_DROP:
 					fwrite($file, "\t;; OP_DROP\n");
 					fwrite($file, "\tpop rax\n");
@@ -1266,7 +1311,7 @@
 		return ($c === ' ' || $c === "\n" || $c === "\t" || $c === '\r');
 	}
 
-	/**
+/**
 	* Returns true if the string specified in $str ends with $end, and false otherwise
 	*/
 	function endsWith($str, $end) {
