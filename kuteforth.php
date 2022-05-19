@@ -67,6 +67,7 @@
 	define('OP_PUSH_PTR',       iota());
 	define('OP_PWRITE',         iota());
 	define('OP_PREAD',          iota());
+	define('OP_CAST',           iota());
 	define('OP_COUNT',          iota());
 
 	define('TYPE_VOID',     'void');    iota(true);
@@ -131,7 +132,7 @@
 
 		// TODO: DCE
 
-		if (OP_COUNT != 31) {
+		if (OP_COUNT != 32) {
 			echo "[ERROR]: Unhandled op_codes in dump, there are now " . OP_COUNT . "\n";
 			exit(127);
 		}
@@ -225,7 +226,10 @@
 						echo "OP_OVER\n";
 						break;
 					case OP_PUSH_PTR:
-						echo "OP_PUSH_PTR" . $ir->value . "\n";
+						echo "OP_PUSH_PTR " . $ir->value . "\n";
+						break;
+					case OP_CAST:
+						echo "OP_CAST " . getHumanReadableTypes(array($ir->value)) . "\n";
 						break;
 					case OP_ENTER_BLOCK:
 						echo "OP_ENTER_BLOCK\n";
@@ -669,6 +673,8 @@
 							$fun = findFunctionByName($functions, $token->word);
 							if($fun !== null) {
 								array_push($inter_repr_comp, new InterRepr(OP_CALL, $token->word, $token));
+							} else if (isAType($token->word)) {
+								array_push($inter_repr_comp, new InterRepr(OP_CAST, getTypesFromHumanReadable(array($token->word)), $token));
 							} else {
 								echo "[COMPILATION ERROR]: Unknown word\n" . $token->getTokenInformation() . "\n";
 								exit(1);
@@ -761,7 +767,7 @@
 	}
 
 	function typeChecking($inter_repr) {
-		if (OP_COUNT !== 31) todo("Unhandled op codes in type checking : there is now " . OP_COUNT);
+		if (OP_COUNT !== 32) todo("Unhandled op codes in type checking : there is now " . OP_COUNT);
 		global $functions;
 
 		$mult_body_if = array();
@@ -982,6 +988,11 @@
 					array_push($type_stack, $t1);
 					array_push($type_stack, $t2);
 					break;
+				case OP_CAST:
+					if (sizeof($type_stack) < 1) typeCheckError("Nothing to case by OP_CAST", $token->getTokenInformation());
+					array_pop($type_stack);
+					array_push($type_stack, $ir->value[0]);
+					break;
 				case OP_LABEL:
 					// afaik there isn't anything here, unless gotos gets added, in which case you should keep state of type stack at current state.
 					break;
@@ -1028,7 +1039,7 @@
 	}
 
 	function generate($inter_repr) {
-		if (OP_COUNT != 31) {
+		if (OP_COUNT != 32) {
 			echo "[ERROR]: Unhandled op_code in code generation, there are now " . OP_COUNT . " op_codes\n";
 			exit(127);
 		}
