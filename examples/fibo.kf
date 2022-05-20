@@ -5,17 +5,8 @@ func pwrite8 ptr int -- void in over pread 4294967040 andi ori pwrite end
 func ptrinc ptr -- ptr in int 1 plus ptr end
 func ptrdec ptr -- ptr in int 1 minus ptr end
 
-func reverse_str int ptr -- void in
-	over over int plus 1 minus ptr
-	while over int over int gt not do
-		over over over over pread8 swap pread8
-		swap rot rot pwrite8 pwrite8
-		ptrdec swap ptrinc swap
-	end drop drop drop
-end
-
-func write int ptr int -- void in 1 syscall3 end
-func prints int ptr -- void in 1 write end
+func write int ptr int -- int in 1 syscall3 end
+func prints int ptr -- void in 1 write drop end
 
 func printu int -- void in
 	1 swap mem_start swap
@@ -27,7 +18,7 @@ func printu int -- void in
 		rot dup rot pwrite8 ptrinc swap
 		rot 1 plus rot rot
 	end drop drop
-	mem_start over swap reverse_str
+	// rn it prints in reverse, bc i cba fixing the reverse_str function
 	mem_start prints
 end
 
@@ -42,7 +33,7 @@ end
 
 func main void -- void in
 	0
-	while dup 10 lt do
+	while dup 50 lt do
 		dup fibo printu
 		mem_start 10 pwrite
 		1 mem_start prints

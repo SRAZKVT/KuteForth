@@ -486,6 +486,7 @@
 								array_push($inter_repr_comp, new InterRepr(OP_PUSH_INTEGER, 0, $token));
 								array_push($inter_repr_comp, new InterRepr(OP_PUSH_INTEGER, 60, $token));
 								array_push($inter_repr_comp, new InterRepr(OP_SYSCALL1, null, $token));
+								array_push($inter_repr_comp, new InterRepr(OP_DROP, null, $token));
 							}
 							array_push($inter_repr_comp, new InterRepr(OP_RETURN, null, $token));
 						} else {
@@ -932,7 +933,6 @@
 					foreach (getTypesFromHumanReadable($ir->value->type_stack_in) as $t) array_push($type_stack, $t);
 					$function_ret_stack = array();
 					foreach (getTypesFromHumanReadable($ir->value->type_stack_out) as $t) array_push($function_ret_stack, $t);
-					
 					break;
 				case OP_PUSH_INTEGER:
 					array_push($type_stack, TYPE_INT);
@@ -961,16 +961,13 @@
 					$in = getTypesFromHumanReadable($funcdef->type_stack_in);
 					$out = getTypesFromHumanReadable($funcdef->type_stack_out);
 					$e = array_pop($in);
+
 					while ($e != null) {
 						$t = array_pop($type_stack);
 						if ($t !== $e) typeCheckError("Mismatched type stacks for function call : expected `" . getHumanReadableTypes($e) . "` but got `" . getHumanReadableTypes($savstack) . "`", $token->getTokenInformation());
 						$e = array_pop($in);
 					}
-					$e = array_pop($out);
-					while ($e != null) {
-						array_push($type_stack, $e);
-						$e = array_pop($out);
-					}
+					foreach ($out as $e) array_push($type_stack, $e);
 					break;
 				case OP_DO:
 					if (sizeof($type_stack) < 1) typeCheckError("OP_DO requires a boolean, but got nothing", $token->getTokenInformation());
@@ -980,30 +977,37 @@
 				case OP_SYSCALL0:
 					if (sizeof($type_stack) < 1) typeCheckError("Not enough arguments for OP_SYSCALL0", $token->getTokenInformation());
 					array_pop($type_stack);
+					array_push($type_stack, TYPE_INT);
 					break;
 				case OP_SYSCALL1:
 					if (sizeof($type_stack) < 2) typeCheckError("Not enough arguments for OP_SYSCALL1", $token->getTokenInformation());
 					for ($i = 0; $i != 2; $i++) array_pop($type_stack);
+					array_push($type_stack, TYPE_INT);
 					break;
 				case OP_SYSCALL2;
 					if (sizeof($type_stack) < 3) typeCheckError("Not enough arguments for OP_SYSCALL2", $token->getTokenInformation());
 					for ($i = 0; $i != 3; $i++) array_pop($type_stack);
+					array_push($type_stack, TYPE_INT);
 					break;
 				case OP_SYSCALL3:
 					if (sizeof($type_stack) < 4) typeCheckError("Not enough arguments for OP_SYSCALL3", $token->getTokenInformation());
 					for ($i = 0; $i != 4; $i++) array_pop($type_stack);
+					array_push($type_stack, TYPE_INT);
 					break;
 				case OP_SYSCALL4:
 					if (sizeof($type_stack) < 5) typeCheckError("Not enough arguments for OP_SYSCALL4", $token->getTokenInformation());
 					for ($i = 0; $i != 5; $i++) array_pop($type_stack);
+					array_push($type_stack, TYPE_INT);
 					break;
 				case OP_SYSCALL5:
 					if (sizeof($type_stack) < 6) typeCheckError("Not enough arguments for OP_SYSCALL5", $token->getTokenInformation());
 					for ($i = 0; $i != 6; $i++) array_pop($type_stack);
+					array_push($type_stack, TYPE_INT);
 					break;
 				case OP_SYSCALL6:
 					if (sizeof($type_stack) < 7) typeCheckError("Not enough arguments for OP_SYSCALL6", $token->getTokenInformation());
 					for ($i = 0; $i != 7; $i++) array_pop($type_stack);
+					array_push($type_stack, TYPE_INT);
 					break;
 				case OP_PLUS:
 					if (sizeof($type_stack) < 2) typeCheckError("Not enough arguments for OP_PLUS", $token->getTokenInformation());
@@ -1265,12 +1269,14 @@
 					fwrite($file, "\t;; OP_SYSCALL0\n");
 					fwrite($file, "\tpop rax\n");
 					fwrite($file, "\tsyscall\n");
+					fwrite($file, "\tpush rax\n");
 					break;
 				case OP_SYSCALL1:
 					fwrite($file, "\t;; OP_SYSCALL1\n");
 					fwrite($file, "\tpop rax\n");
 					fwrite($file, "\tpop rdi\n");
 					fwrite($file, "\tsyscall\n");
+					fwrite($file, "\tpush rax\n");
 					break;
 				case OP_SYSCALL2:
 					fwrite($file, "\t;; OP_SYSCALL2\n");
@@ -1278,6 +1284,7 @@
 					fwrite($file, "\tpop rdi\n");
 					fwrite($file, "\tpop rsi\n");
 					fwrite($file, "\tsyscall\n");
+					fwrite($file, "\tpush rax\n");
 					break;
 				case OP_SYSCALL3;
 					fwrite($file, "\t;; OP_SYSCALL3\n");
@@ -1286,6 +1293,7 @@
 					fwrite($file, "\tpop rsi\n");
 					fwrite($file, "\tpop rdx\n");
 					fwrite($file, "\tsyscall\n");
+					fwrite($file, "\tpush rax\n");
 					break;
 				case OP_SYSCALL4:
 					fwrite($file, "\t;; OP_SYSCALL4\n");
@@ -1295,6 +1303,7 @@
 					fwrite($file, "\tpop rdx\n");
 					fwrite($file, "\tpop r10\n");
 					fwrite($file, "\tsyscall\n");
+					fwrite($file, "\tpush rax\n");
 					break;
 				case OP_SYSCALL5:
 					fwrite($file, "\t;; OP_SYSCALL5\n");
@@ -1305,6 +1314,7 @@
 					fwrite($file, "\tpop r10\n");
 					fwrite($file, "\tpop r8\n");
 					fwrite($file, "\tsyscall\n");
+					fwrite($file, "\tpush rax\n");
 					break;
 				case OP_SYSCALL6:
 					fwrite($file, "\t;; OP_SYSCALL6\n");
@@ -1316,6 +1326,7 @@
 					fwrite($file, "\tpop r8\n");
 					fwrite($file, "\tpop r9\n");
 					fwrite($file, "\tsyscall\n");
+					fwrite($file, "\tpush rax\n");
 					break;
 				case OP_EQ:
 					fwrite($file, "\t;; OP_EQ\n");

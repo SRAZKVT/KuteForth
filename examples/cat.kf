@@ -1,0 +1,55 @@
+// this is slightly broken and doesn't exactly work as perfectly as cat, but it prints at least one file
+
+func cstr_size ptr -- int end
+func pread8 ptr -- int in pread 255 andi end
+func ptrinc ptr -- ptr in int 1 plus ptr end
+func prints int ptr -- void in 1 1 syscall3 drop end
+func open int int ptr -- int in 2 syscall3 end
+func read int ptr int -- int in 0 syscall3 end
+func close int -- int in 3 syscall1 end
+func exit int -- void in 60 syscall1 drop end
+func cstr_to_str ptr -- int ptr in dup cstr_size swap end
+
+func cstr_size ptr -- int in
+	0 swap
+	while dup pread8 0 eq not do
+		swap 1 plus
+		swap ptrinc
+	end drop
+end
+
+func read_file ptr -- void in
+	dup
+	0777 swap 0 swap open
+	if dup 0 lt do
+		"Couldn't open the file `" prints
+		swap dup cstr_to_str prints swap
+		"`\n" prints
+		1 exit
+	end
+	swap drop
+
+	while dup 1024 swap mem_start swap read dup 0 gt do
+		mem_start prints
+	end
+
+	close drop
+end
+
+func main void -- void in
+	0 while dup argc eq not do
+		"arg[" prints dup 48 plus mem_start swap pwrite 1 mem_start prints
+		"] : " prints
+		dup argv cstr_to_str prints "\n" prints
+		1 plus
+	end drop
+
+	while argc 1 eq do
+		80 mem_start 0 read
+		mem_start prints
+	end
+	1 while dup argc gt not do
+		dup argv read_file
+		1 plus
+	end drop
+end
