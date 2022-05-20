@@ -2,10 +2,13 @@
 <?php
 	$iota = 0;
 	$functions = array();
+	$implemented_functions = array();
 	$constants = array(); // Constants are not implemented yet
 	$strings = array();
+	$files_included = array();
 
 	define('KEYWORD_FUNCTION' ,'func');          iota(true);
+	define('KEYWORD_INCLUDE', 'include');        iota();
 	define('KEYWORD_IN_BLOCK' ,'in');            iota();
 	define('KEYWORD_END_BLOCK' ,'end');          iota();
 	define('KEYWORD_IF', 'if');                  iota();
@@ -95,6 +98,9 @@
 	define('BLOCK_MULT_BODY_IF',    iota());
 	define('BLOCK_DO',              iota());
 	define('BLOCK_FUNC',            iota());
+
+	define('FILE_VISITING', iota(true));
+	define('FILE_VISITED',  iota());
 
 	define('CALL_STACK_SIZE', 512);
 	define('STATIC_BUFFER_SIZE', 64000);
@@ -319,17 +325,26 @@
 			$char_place = 0;
 			$chars = str_split($line);
 			$current_word = "";
+			$escape = false;
 			foreach ($chars as $c) {
 				$char_place++;
 				if ($c === "\"") {
 					if ($count_all_in) {
-						$count_all_in = false;
+						if (!$escape) $count_all_in = false;
 					} else {
 						$count_all_in = true;
 					}
 				}
 				if ($count_all_in) {
+					if ($c === "\\") {
+						if (!$escape) {
+							$escape = true;
+							continue;
+						}
+					}
+					if ($escape) $current_word = $current_word . "\\";
 					$current_word = $current_word . $c;
+					$escape = false;
 					continue;
 				}
 				if ($c === "/") {
@@ -382,6 +397,8 @@
 	function getInterRepr($tokens) {
 		global $functions;
 		global $strings;
+		global $implemented_functions;
+		global $files_included;
 
 		$inter_repr_comp = array();
 
@@ -389,7 +406,6 @@
 
 		$while_stack = array(); // TODO: This is extremely dirty, atm need to have a new stack for each block created, should refactor to smth that makes more sense.
 		$current_blocks = array();
-		$implemented_functions = array();
 		$in_function_def_in = false;
 		$in_function_definition = false;
 		$function_name_defined = false;
@@ -403,9 +419,10 @@
 		$jmp_end_stacks = array();
 		$jmp_nb = 0;
 		$condition_def = false;
+		$in_include = false;
 
 
-		if (KEYWORD_COUNT != 36) {
+		if (KEYWORD_COUNT != 37) {
 			echo "[ERROR]: Unhandled keywords, there are now (in parsing) " . KEYWORD_COUNT . " keywords\n";
 			exit(127);
 		}
@@ -423,6 +440,10 @@
 					$in_function_def_in = true;
 					$block_count++;
 					continue 2;
+					break;
+				case KEYWORD_INCLUDE:
+					$in_include = true;
+					$block_count++;
 					break;
 				case KEYWORD_IN_BLOCK:
 					if ($function_name === "main") {
@@ -753,16 +774,38 @@
 								echo "[COMPILATION ERROR]: Unknown word\n" . $token->getTokenInformation() . "\n";
 								exit(1);
 							}
+						} else if ($in_include) {
+							if (!startsWith($token->word, "\"")) {
+								echo "[COMPILATION ERROR]: Only strings are allowed inside include blocks\n" . $token->getTokenInformation() . "\n";
+								exit(1);
+							}
+							$str = substr($token->word, 1);
+							$str = substr($str, 0, -1);
+							$path;
+							if (startsWith($str, "./")) {
+								$str = substr($str, 2);
+								$path = realpath($str);
+							} else if (startsWith($str, "/")) $path = $str;
+							else {
+								$path = __DIR__ . "/std/" . $str;
+							}
+							if (in_array($path ,$files_included, false)) {
+								if ($files_included[$path] === FILE_VISITING) {
+									echo "[COMPILATION ERROR]: This file located at ` " . $path . "` is already being visited\n";
+									exit(1);
+								} else continue 2;
+							}
+							$files_included[$path] = FILE_VISITING;
+							$inc_tokens = getTokens($path);
+							$inc_inter_repr = getInterRepr($inc_tokens);
+							foreach ($inc_inter_repr as $inc_ir) array_push($inter_repr_comp, $inc_ir);
+							$files_included[$path] = FILE_VISITED;
 						} else {
-							echo "[COMPILATION ERROR]: Words are not allowed outside of blocks" . $token->getTokenInformation() . "\n";
+							echo "[COMPILATION ERROR]: Words are not allowed outside of blocks\n" . $token->getTokenInformation() . "\n";
 							exit(1);
 						}
 					}
 			}
-		}
-		if (findFunctionByName($functions, "_start") === null) {
-			echo "[COMPILATION ERROR]: No entrypoint has been defined, the entrypoint has to be a function called `main`\n";
-			exit(1);
 		}
 		foreach ($functions as $f) {
 			if (findFunctionByName($implemented_functions, $f->name) === null) {
