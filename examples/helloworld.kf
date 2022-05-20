@@ -1,5 +1,6 @@
-func write int ptr int -- int in 1 syscall3 end
-func prints int ptr -- void in 1 write drop end
+include 
+	"std.kf" 
+end
 
 func main void -- void in
 	"Hello, World!\n" prints

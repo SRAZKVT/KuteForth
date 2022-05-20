@@ -1,0 +1,4 @@
+func pread8 ptr -- int in pread 255 andi end
+func pwrite8 ptr int -- void in over pread 4294967040 andi ori pwrite end
+func ptrinc ptr -- ptr in int 1 plus ptr end
+func ptrdec ptr -- ptr in int 1 minus ptr end

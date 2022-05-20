@@ -1,21 +1,7 @@
 // this is slightly broken and doesn't exactly work as perfectly as cat, but it prints at least one file
 
-func cstr_size ptr -- int end
-func pread8 ptr -- int in pread 255 andi end
-func ptrinc ptr -- ptr in int 1 plus ptr end
-func prints int ptr -- void in 1 1 syscall3 drop end
-func open int int ptr -- int in 2 syscall3 end
-func read int ptr int -- int in 0 syscall3 end
-func close int -- int in 3 syscall1 end
-func exit int -- void in 60 syscall1 drop end
-func cstr_to_str ptr -- int ptr in dup cstr_size swap end
-
-func cstr_size ptr -- int in
-	0 swap
-	while dup pread8 0 eq not do
-		swap 1 plus
-		swap ptrinc
-	end drop
+include
+	"std.kf"
 end
 
 func read_file ptr -- void in
@@ -33,7 +19,7 @@ func read_file ptr -- void in
 		mem_start prints
 	end
 
-	close drop
+	close
 end
 
 func main void -- void in

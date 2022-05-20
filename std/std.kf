@@ -1,0 +1,8 @@
+// this file should only be including other parts of the standard library, not actually implement anything
+
+include
+	"io.kf"
+	"memory.kf"
+	"strings.kf"
+	"syscalls.kf"
+end

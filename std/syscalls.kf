@@ -1,0 +1,45 @@
+func read 
+int // count
+ptr // buf
+int // fd
+--
+int // count
+in
+	0 syscall3
+end
+
+func write
+int // count
+ptr // buf
+int // fd
+--
+int // count
+in
+	1 syscall3
+end
+
+func open
+int // mode
+int // flags
+ptr // filename
+--
+int // fd
+in
+	2 syscall3
+end
+
+func close
+int // fd
+--
+void
+in
+	3 syscall1 drop
+end
+
+func exit
+int // error_code
+--
+void
+in
+	60 syscall1 drop
+end

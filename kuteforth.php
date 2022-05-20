@@ -789,7 +789,7 @@
 							else {
 								$path = __DIR__ . "/std/" . $str;
 							}
-							if (in_array($path ,$files_included, false)) {
+							if (isset($files_included[$path])) {
 								if ($files_included[$path] === FILE_VISITING) {
 									echo "[COMPILATION ERROR]: This file located at ` " . $path . "` is already being visited\n";
 									exit(1);

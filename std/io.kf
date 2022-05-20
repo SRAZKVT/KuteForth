@@ -1,0 +1,27 @@
+include
+	"syscalls.kf"
+	"memory.kf"
+end
+
+func prints int ptr -- void in
+	1 write drop
+end
+
+// TODO: Include use of buffer to not have numbers printed in reverse
+func printu int -- void in
+	1 swap mem_start swap
+	if dup 0 eq do
+		over 48 pwrite8 swap ptrinc swap rot 1 plus rot rot
+	end
+	while dup 0 eq not do
+		10 divmod swap 48 plus
+		rot dup rot pwrite8 ptrinc swap
+		rot 1 plus rot rot
+	end drop drop
+	mem_start prints
+end
+
+func printc int -- void in
+	mem_start swap pwrite
+	1 mem_start prints
+end

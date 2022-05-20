@@ -1,25 +1,7 @@
 // TODO: Make amount of numbers to check amount specified in argv
 
-func pread8 ptr -- int in pread 255 andi end
-func pwrite8 ptr int -- void in over pread 4294967040 andi ori pwrite end
-func ptrinc ptr -- ptr in int 1 plus ptr end
-func ptrdec ptr -- ptr in int 1 minus ptr end
-
-func write int ptr int -- int in 1 syscall3 end
-func prints int ptr -- void in 1 write drop end
-
-func printu int -- void in
-	1 swap mem_start swap
-	if dup 0 eq do
-		over 48 pwrite8 swap ptrinc swap rot 1 plus rot rot
-	end
-	while dup 0 eq not do
-		10 divmod swap 48 plus
-		rot dup rot pwrite8 ptrinc swap
-		rot 1 plus rot rot
-	end drop drop
-	// rn it prints in reverse, bc i cba fixing the reverse_str function
-	mem_start prints
+include
+	"std.kf"
 end
 
 func fibo int -- int in
@@ -35,8 +17,7 @@ func main void -- void in
 	0
 	while dup 50 lt do
 		dup fibo printu
-		mem_start 10 pwrite
-		1 mem_start prints
+		"\n" prints
 		1 plus
 	end drop
 end
