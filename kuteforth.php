@@ -1208,7 +1208,10 @@
 						fwrite($file, "\tmov [call_stack+r15*8], r14\n");
 						fwrite($file, "\tinc r15\n");
 					}
-					else fwrite($file, "\tmov r15, 0\n");
+					else {
+						fwrite($file, "\tmov r15, 0\n");
+						fwrite($file, "\tmov [args], rsp\n");
+					}
 					break;
 				case OP_RETURN:
 					fwrite($file, "\t;; OP_RETURN\n");
@@ -1432,12 +1435,17 @@
 				case OP_ARGC:
 					fwrite($file, "\t;; OP_ARGC\n");
 					fwrite($file, "\tmov rax, [args]\n");
+					fwrite($file, "\tmov rax, [rax]\n");
 					fwrite($file, "\tpush rax\n");
 					break;
 				case OP_ARGV:
 					fwrite($file, "\t;; OP_ARGV\n");
 					fwrite($file, "\tpop rdi\n");
-					fwrite($file, "\tmov rax, [args+8+8*rdi]\n");
+					fwrite($file, "\tshl rdi, 3\n");
+					fwrite($file, "\tmov rax, [args]\n");
+					fwrite($file, "\tadd rax, 8\n");
+					fwrite($file, "\tadd rax, rdi\n");
+					fwrite($file, "\tmov rax, [rax]\n");
 					fwrite($file, "\tpush rax\n");
 					break;
 			} 
