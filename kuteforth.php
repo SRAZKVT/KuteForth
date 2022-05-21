@@ -448,6 +448,11 @@
 		}
 	}
 
+	/**
+	* This function takes as input an array of tokens to parse, and returns an array of intermediate representation.
+	* This function should do all of the syntax checking. Anything returned from this function is deemed syntaxically correct.
+	* It doesn't check if type checking is correct, or if the program has any error, only syntax.
+	*/
 	function getInterRepr($tokens) {
 		global $functions;
 		global $strings;
@@ -870,6 +875,12 @@
 		return $inter_repr_comp;
 	}
 
+	/**
+	* This class contains the three elements that compose an intermediary representation component :
+	* - op_code represents the operation to be executed (for example, OP_PLUS)
+	* - token represents the token where this element was defined
+	* - value holds relevant value of of op_code, if one is needed. if one isn't needed, then it should be set to null
+	*/
 	class InterRepr {
 		public $op_code;
 		public $value;
@@ -882,6 +893,9 @@
 		}
 	}
 
+	/**
+	* This function returns the current value of a counter, and increments it. If true is given as an argument to this function, then it resets the counter to 0
+	*/
 	function iota($reset=false) {
 		global $iota;
 		if ($reset) $iota = 0;
@@ -890,11 +904,17 @@
 		return $val;
 	}
 
+	/**
+	* This function returns a function definition if given function name exists, null otherwise
+	*/
 	function findFunctionByName($functions, $name) {
 		foreach ($functions as $f) if ($f->name === $name) return $f;
 		return null;
 	}
 
+	/**
+	* This function takes as input a string, and outputs an array of integers, containing the ascii value of each string character. This is where escaped characters get implemented
+	*/
 	function getBytes($str) {
 		$ret = array();
 		$chars = str_split($str);
@@ -907,6 +927,7 @@
 				if ($escape) {
 					if ($c === "t") array_push($ret, ord("\t"));
 					else if ($c === "n") array_push($ret, ord("\n"));
+					else if ($c === "\"") array_push($ret, ord("\""));
 					else {
 						echo "[COMPILATION ERROR]:Unescapable character : " . $c . "\n";
 						exit(1);
@@ -917,17 +938,31 @@
 		return $ret;
 	}
 
+	/**
+	* Returns wether a string represents an integer or not
+	* Example : "123" will return true ; "foo" will return false
+	*/
 	function isAnInt($val) {
 		$len = strlen($val);
 		if ($len < 1) return false;
 		return ctype_digit($val);
 	}
 
+	/**
+	* Returns wether a word is the human readable representation of a type
+	* Example : "ptr" will return true ; "foo" will return false (unless there is a type named that way)
+	*/
 	function isAType($val) {
 		global $types;
 		return in_array($val, $types, false);
 	}
 
+	/**
+	* This class contains the definition of a function :
+	* - Its name
+	* - The input it expects, as array of human readable types
+	* - The output it provides, as array of human readable types
+	*/
 	class FunctionDef {
 		public $name;
 		public $type_stack_in;
@@ -940,6 +975,10 @@
 		}
 	}
 
+	/**
+	* Since we are using the function names directly in assembly, we need function names to be legal
+	* Legal charaters are the characters in the string $allowedCharacters
+	*/
 	function isFunctionNameLegal($name) {
 		$allowedCharacters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_$#@~.?";
 		$name_chr = str_split($name);
@@ -948,17 +987,30 @@
 		return true;
 	}
 
+	/**
+	* Prints the information given in $reason for type checking error and prints the info about where it happened
+	*/
 	function typeCheckError($reason, $info) {
 		echo "[TYPE-CHECKING ERROR]: " . $reason . "\n";
 		echo $info . "\n";
 		exit(1);
 	}
 
+	/**
+	* Prints a todo message, and exits the program
+	*/
 	function todo($message) {
 		echo "[TODO]: " . $message . "\n";
 		exit(1);
 	}
 
+	/**
+	* This function verifies if the generated intermediary representation type checks correctly, and verifies :
+	* - If different operations have the right arguments
+	* - If a function called has the right argument types on the stack
+	* - If a function returns the right types
+	* It however doesn't check for syntax errors, as those should be dealt with during the parsing, and the incoming intermediary representation is assumed clean
+	*/
 	function typeChecking($inter_repr) {
 		if (OP_COUNT !== 38) todo("Unhandled op codes in type checking : there is now " . OP_COUNT);
 		global $functions;
@@ -1239,6 +1291,10 @@
 		}
 	}
 
+	/**
+	* This function takes as input an array of human readable types, and returns an array of raw types
+	* Example : array("int", "ptr") as input will return array(TYPE_INT, TYPE_PTR)
+	*/
 	function getTypesFromHumanReadable($types) {
 		$ret = array();
 		foreach ($types as $type) {
@@ -1254,6 +1310,10 @@
 		return $ret;
 	}
 
+	/**
+	* This function takes as input a stack containing raw types, and returns a string containing the state of the stack, with proper names
+	* Example : array(TYPE_PTR, TYPE_INT) as input will return "ptr int"
+	*/
 	function getHumanReadableTypes($type_stack) {
 		$ret = "";
 		foreach($type_stack as $type) {
@@ -1271,6 +1331,9 @@
 		return $ret;
 	}
 
+	/**
+	* Writes down header and footer of the assembly file, the actual code generated is present in generateFromIR
+	*/
 	function generate($inter_repr) {
 		global $strings;
 
@@ -1298,6 +1361,10 @@
 		fclose($file);
 	}
 
+	/**
+	* Writes into $file the assembly relative to each operation present in $inter_repr
+	* 
+	*/
 	function generateFromIR($inter_repr, $file) {
 		foreach ($inter_repr as $operation) {
 			switch ($operation->op_code) {
