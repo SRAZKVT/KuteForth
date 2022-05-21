@@ -1,0 +1,24 @@
+include
+	"std.kf"
+end
+
+func mod int int -- int in divmod drop end
+
+func main void -- void in
+	1
+	while dup 50 gt not do
+		dup printu
+		if dup 3 mod 0 eq over 5 mod 0 eq and do
+			"FizzBuzz" prints
+		elif dup 3 mod 0 eq do
+			"Fizz" prints
+		elif dup 5 mod 0 eq do
+			"Buzz" prints
+		else
+			dup printu
+		end 
+		"\n" prints
+		1 plus
+	end
+	drop
+end

@@ -33,6 +33,8 @@
 	define('KEYWORD_LESS_THAN', 'lt');           iota();
 	define('KEYWORD_GREATER_THAN', 'gt');        iota();
 	define('KEYWORD_NOT', 'not');                iota();
+	define('KEYWORD_OR', 'or');                  iota();
+	define('KEYWORD_AND', 'and');                iota();
 	define('KEYWORD_DROP', 'drop');              iota();
 	define('KEYWORD_DUP', 'dup');                iota();
 	define('KEYWORD_SWAP','swap');               iota();
@@ -70,6 +72,8 @@
 	define('OP_LT',             iota());
 	define('OP_GT',             iota());
 	define('OP_NOT',            iota());
+	define('OP_AND',            iota());
+	define('OP_OR',             iota());
 	define('OP_DROP',           iota());
 	define('OP_DUP',            iota());
 	define('OP_SWAP',           iota());
@@ -204,7 +208,7 @@
 		}
 
 
-		if (OP_COUNT != 38) {
+		if (OP_COUNT != 40) {
 			echo "[ERROR]: Unhandled op_codes in dump, there are now " . OP_COUNT . "\n";
 			exit(127);
 		}
@@ -293,6 +297,12 @@
 						break;
 					case OP_NOT:
 						echo "OP_NOT\n";
+						break;
+					case OP_AND:
+						echo "OP_AND\n";
+						break;
+					case OP_OR:
+						echo "OP_OR\n";
 						break;
 					case OP_DROP:
 						echo "OP_DROP\n";
@@ -481,7 +491,7 @@
 		$in_include = false;
 
 
-		if (KEYWORD_COUNT != 37) {
+		if (KEYWORD_COUNT != 39) {
 			echo "[ERROR]: Unhandled keywords, there are now (in parsing) " . KEYWORD_COUNT . " keywords\n";
 			exit(127);
 		}
@@ -555,7 +565,6 @@
 					break;
 				case KEYWORD_END_BLOCK:
 					$block = array_pop($current_blocks);
-					if ($block !== BLOCK_WHILE) array_push($current_blocks, $block);
 					if ($block_count < 1) {
 						echo "[COMPILATION ERROR]: End has no block to close\n" . $token->getTokenInformation() . "\n";
 						exit(1);
@@ -729,6 +738,12 @@
 					break;
 				case KEYWORD_NOT:
 					array_push($inter_repr_comp , new InterRepr(OP_NOT, null, $token));
+					break;
+				case KEYWORD_AND:
+					array_push($inter_repr_comp, new InterRepr(OP_AND, null, $token));
+					break;
+				case KEYWORD_OR:
+					array_push($inter_repr_comp, new InterRepr(OP_OR, null, $token));
 					break;
 				case KEYWORD_DUP:
 					array_push($inter_repr_comp, new InterRepr(OP_DUP, null, $token));
@@ -1012,7 +1027,7 @@
 	* It however doesn't check for syntax errors, as those should be dealt with during the parsing, and the incoming intermediary representation is assumed clean
 	*/
 	function typeChecking($inter_repr) {
-		if (OP_COUNT !== 38) todo("Unhandled op codes in type checking : there is now " . OP_COUNT);
+		if (OP_COUNT !== 40) todo("Unhandled op codes in type checking : there is now " . OP_COUNT);
 		global $functions;
 
 		$mult_body_if = array();
@@ -1231,6 +1246,20 @@
 					if ($t === TYPE_BOOL) array_push($type_stack, TYPE_BOOL);
 					else typeCheckError("Can only invert the state of a boolean with OP_NOT, instead got `" . getHumanReadableTypes(array($t)) . "`", $token->getTokenInformation());
 					break;
+				case OP_AND:
+					if (sizeof($type_stack) < 2) typeCheckError("Not enough elements for OP_AND", $token->getTokenInformation());
+					$t1 = array_pop($type_stack);
+					$t2 = array_pop($type_stack);
+					if ($t1 !== TYPE_BOOL || $t2 !== TYPE_BOOL) typeCheckError("Unsupported operation with OP_AND : " . getHumanReadableTypes(array($t1, $t2)), $token->getTokenInformation());
+					array_push($type_stack, TYPE_BOOL);
+					break;
+				case OP_OR:
+					if (sizeof($type_stack) < 2) typeCheckError("Not enough elements for OP_OR", $token->getTokenInformation());
+					$t1 = array_pop($type_stack);
+					$t2 = array_pop($type_stack);
+					if ($t1 !== TYPE_BOOL || $t2 !== TYPE_BOOL) typeCheckError("Unsupported operation with OP_OR : " . getHumanReadableTypes(array($t1, $t2)), $token->getTokenInformation());
+					array_push($type_stack, TYPE_BOOL);
+					break;
 				case OP_DROP:
 					if (sizeof($type_stack) < 1) typeCheckError("No elements to drop for OP_DROP", $token->getTokenInformation());
 					array_pop($type_stack);
@@ -1338,7 +1367,7 @@
 	function generate($inter_repr) {
 		global $strings;
 
-		if (OP_COUNT != 38) {
+		if (OP_COUNT != 40) {
 			echo "[ERROR]: Unhandled op_code in code generation, there are now " . OP_COUNT . " op_codes\n";
 			exit(127);
 		}
@@ -1528,6 +1557,27 @@
 					fwrite($file, "\tpop rax\n");
 					fwrite($file, "\tmov rdi, 1\n");
 					fwrite($file, "\txor rax, rdi\n");
+					fwrite($file, "\tpush rax\n");
+					break;
+				case OP_AND:
+					fwrite($file, "\t;; OP_AND\n");
+					fwrite($file, "\tmov rsi, 1\n");
+					fwrite($file, "\tmov rdx, 0\n");
+					fwrite($file, "\tpop rax\n");
+					fwrite($file, "\ttest rax, rax\n");
+					fwrite($file, "\tcmovz rsi, rdx\n");
+					fwrite($file, "\tpop rax\n");
+					fwrite($file, "\ttest rax, rsi\n");
+					fwrite($file, "\tcmovz rsi, rdx\n");
+					fwrite($file, "\tpush rsi\n");
+					break;
+				case OP_OR:
+					fwrite($file, "\t;; OP_OR\n");
+					fwrite($file, "\tpop rax\n");
+					fwrite($file, "\tand rax, 1\n");
+					fwrite($file, "\tpop rdi\n");
+					fwrite($file, "\tand rdi, 1\n");
+					fwrite($file, "\tor rax, rdi\n");
 					fwrite($file, "\tpush rax\n");
 					break;
 				case OP_PLUS:
