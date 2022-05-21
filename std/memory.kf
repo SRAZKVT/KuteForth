@@ -1,4 +1,71 @@
-func pread8 ptr -- int in pread 255 andi end
-func pwrite8 ptr int -- void in over pread 4294967040 andi ori pwrite end
+// Magic numbers : (to change to hex as soon as possible)
+//
+// 255                  : 0x0000_0000_0000_00FF
+// 65535                : 0x0000_0000_0000_FFFF
+// 4294967295           : 0x0000_0000_FFFF_FFFF
+// 18446744073709551615 : 0xFFFF_FFFF_FFFF_FFFF
+// 
+// 18446744073709551360 : 0xFFFF_FFFF_FFFF_FF00
+// 18446744073709486080 : 0xFFFF_FFFF_FFFF_0000
+// 18446744069414584320 : 0xFFFF_FFFF_0000_0000
+// 0                    : 0x0000_0000_0000_0000
+
+include
+	"bool.kf"
+end
+
+func NULL void -- ptr in 0 ptr end
+
+func pread8  ptr -- int in pread 255        andi end
+func pread16 ptr -- int in pread 65535      andi end
+func pread32 ptr -- int in pread 4294967295 andi end
+func pread64 ptr -- int in pread                 end // no need to do an and on this one, at least as long as the target has 64 bits architecture
+
+func pwrite8  ptr int -- void in over pread 18446744073709551360 andi ori pwrite end
+func pwrite16 ptr int -- void in over pread 18446744073709486080 andi ori pwrite end
+func pwrite32 ptr int -- void in over pread 18446744069414584320 andi ori pwrite end
+func pwrite64 ptr int -- void in                                          pwrite end // same as with pread64
+
+func ptreq ptr ptr -- bool in int swap int eq end
+
 func ptrinc ptr -- ptr in int 1 plus ptr end
 func ptrdec ptr -- ptr in int 1 minus ptr end
+
+// WARNING
+// The static buffer allocator assumes the first 64 bits of the static buffer to be its counter for the amount of bytes currently in use. DO NOT WRITE THERE
+// If you do, data loss is going to happen.
+
+func alloc_temp_buffer
+int  // amount of bytes to allocate
+--
+ptr  // pointer to begining of allocated memory
+bool // success
+in
+	if dup mem_start pread64 plus 64000 8 minus gt do // if end of memory after allocation would be beyond buffer size, return null ptr and false
+		drop NULL false
+	else
+		mem_start pread64 8 plus mem_start int plus ptr  // get current pointer to end of memory
+		swap mem_start pread64 plus mem_start swap pwrite64 // add amount of allocated bytes to memory
+		true
+	end
+end
+
+func free_temp_buffer
+int  // amount of bytes to deallocate
+--
+void
+in
+	if dup mem_start pread64 swap minus 0 lt do
+		NULL swap pwrite64 // trying to deallocate memory that wasn't allocated in the first place, segfault
+	else
+		mem_start pread64 8 plus mem_start int plus ptr
+		swap
+		while dup 0 eq not do
+			1 minus
+			swap
+			dup 0 pwrite8
+			ptrdec
+			swap
+		end drop drop
+	end
+end

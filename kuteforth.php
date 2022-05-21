@@ -1035,6 +1035,7 @@
 						array_push($block_stack, BLOCK_FUNC);
 					} else if ($ir->value === BLOCK_WHILE) {
 						array_push($block_stack, BLOCK_WHILE);
+						array_push($mult_body_if, false);
 						$do_no_save = true;
 						array_push($saved_type_stack, $type_stack);
 					} else if ($ir->value === BLOCK_IF) {

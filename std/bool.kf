@@ -1,0 +1,2 @@
+func true  void -- bool in 1 bool end
+func false void -- bool in 0 bool end
