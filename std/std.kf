@@ -5,4 +5,5 @@ include
 	"memory.kf"
 	"strings.kf"
 	"syscalls.kf"
+	"bool.kf"
 end

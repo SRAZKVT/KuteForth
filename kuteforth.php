@@ -640,7 +640,9 @@
 					array_push($inter_repr_comp, new InterRepr(OP_ENTER_BLOCK, BLOCK_DO, $token));
 					$jump_stack[$block_count] = sizeof($inter_repr_comp);
 					array_push($inter_repr_comp, new InterRepr(OP_DO, null, $token));
-					$condition_def = false;
+					$a1 = array_pop($current_blocks);
+					$a2 = array_pop($current_blocks);
+					$condition_def = ($a2 === BLOCK_IF || $a2 === BLOCK_MULT_BODY_IF || $a2 === BLOCK_WHILE);
 					break;
 				case KEYWORD_ELSE:
 					if ($do_depth < 1) {
