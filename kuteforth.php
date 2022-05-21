@@ -115,13 +115,62 @@
 			exit(1);
 		}
 		$filepath;
-		$autorun = $argv[1] == "-r";
-		$dump = $argv[1] === "-d";
-		if ($autorun || $dump) {
-			$filepath = $argv[2];
-		} else {
-			$filepath = $argv[1];
+		$autorun = false;
+		$verify = false;
+		$debug = false;
+		$dump = false;
+		$done = false;
+
+		$args = array();
+
+		foreach ($argv as $arg) {
+			if ($done) array_push($args, $arg);
+			if (startsWith($arg, "--")) {
+				switch (substr($arg, 2)) {
+					case "verify":
+						$verify = true;
+						break;
+					case "run":
+						$autorun = true;
+						break;
+					case "dump":
+						$dump = true;
+						break;
+					case "debug":
+						$debug = true;
+						break;
+					default:
+						echo "[ERROR]: Unrecognized option : " . $arg . "\n";
+						usage($argv[0]);
+				}
+			} else if (startsWith($arg, "-")) {
+				$arg = substr($arg, 1);
+				$chars = str_split($arg);
+				foreach ($chars as $c) {
+					switch ($c) {
+						case "d":
+							$debug = true;
+							break;
+						case "r":
+							$autorun = true;
+							break;
+						case "v":
+							$verify = true;
+							break;
+						case "b":
+							$debug = true;
+							break;
+						default:
+							echo "[ERROR]: Unrecognized option : " . $arg . "\n";
+							usage($argv[0]);
+					}
+				}
+			} else {
+				$filepath = $arg;
+				$done = true;
+			}
 		}
+		
 		if (!endsWith($filepath, ".kf")) {
 			usage($argv[0]);
 			exit(1);
@@ -149,7 +198,11 @@
 		echo "[INFO]: Type-checking took {$t}s\n";
 		$total += $t;
 
-		// TODO: DCE
+		if ($verify) {
+			echo "No problem has been detected\n";
+			exit(0);
+		}
+
 
 		if (OP_COUNT != 38) {
 			echo "[ERROR]: Unhandled op_codes in dump, there are now " . OP_COUNT . "\n";
@@ -286,6 +339,7 @@
 		$ld = shell_exec("ld -e _start -o output output.o");
 		rename("output", $basename);
 		unlink("output.o");
+		if (!$debug) unlink("output.asm");
 		$te = microtime(true);
 		$t = $te - $ts;
 		echo "[INFO]: Generation took {$t}s\n";
@@ -296,7 +350,7 @@
 			echo "[Info]: Running the program\n";
 			$exit_code = 0;
 			$output = array();
-			exec("./" . $basename, $output, $exit_code);
+			exec("./" . $basename . " " . implode(" ", $args), $output, $exit_code);
 			foreach ($output as $line) {
 				echo $line . "\n";
 			}
@@ -1533,6 +1587,10 @@
 	* Prints the usage of the command.
 	*/
 	function usage($invoke) {
-		echo "Usage :: " . $invoke . " [-r] <program_name>.kf\n";
+		echo "Usage :: " . $invoke . " [OPTIONS] <program_name>.kf [EXTRA ARGS]\n";
+		echo "--debug or -b  -> Lets the generated assembly file available for debugging bugs in the code generation\n";
+		echo "--run or -r    -> Automatically runs the program if sucessfuly compiled, with provided arguments\n";
+		echo "--verify or -v -> Simply verifies if the file given is able to compile\n";
+		echo "--dump or -d   -> Dumps intermediary representation of the language\n";
 	}
 ?>
