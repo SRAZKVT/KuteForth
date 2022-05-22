@@ -1,5 +1,6 @@
 include 
 	"memory.kf"
+	"bool.kf"
 end
 
 func cstr_size ptr -- int in
