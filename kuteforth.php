@@ -643,6 +643,8 @@
 					$a1 = array_pop($current_blocks);
 					$a2 = array_pop($current_blocks);
 					$condition_def = ($a2 === BLOCK_IF || $a2 === BLOCK_MULT_BODY_IF || $a2 === BLOCK_WHILE);
+					array_push($current_blocks, $a2);
+					array_push($current_blocks, $a1);
 					break;
 				case KEYWORD_ELSE:
 					if ($do_depth < 1) {

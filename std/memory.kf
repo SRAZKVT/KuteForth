@@ -59,6 +59,7 @@ in
 		NULL swap pwrite64 // trying to deallocate memory that wasn't allocated in the first place, segfault
 	else
 		mem_start pread64 8 plus mem_start int plus ptr
+		over mem_start swap over pread64 swap minus pwrite64
 		swap
 		while dup 0 eq not do
 			1 minus
@@ -66,6 +67,6 @@ in
 			dup 0 pwrite8
 			ptrdec
 			swap
-		end drop drop
+		end swap drop drop
 	end
 end
