@@ -52,7 +52,7 @@ int  // amount of bytes to deallocate
 --
 void
 in
-	if dup mem_start pread64 swap minus 0 gt not do
+	if dup mem_start pread64 minus 0 lt do
 		NULL swap pwrite64 // trying to deallocate memory that wasn't allocated in the first place, segfault
 	else
 		dup mem_start swap over pread64 swap minus pwrite64 drop // write in head of memory the decreased amount of bytes allocated
