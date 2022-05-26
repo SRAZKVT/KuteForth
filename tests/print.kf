@@ -1,0 +1,5 @@
+include "std.kf" end
+
+func main void -- void in
+	"success" prints
+end

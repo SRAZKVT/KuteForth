@@ -1,0 +1,10 @@
+include "std.kf" end
+
+func main void -- void in
+	1 1 plus printu             "\n" prints
+	1 1 minus printu            "\n" prints
+	70 5 divmod printu printu   "\n" prints
+	8 5 mult printu             "\n" prints
+	99 1 andi printu            "\n" prints
+	88 1 ori printu             "\n" prints
+end

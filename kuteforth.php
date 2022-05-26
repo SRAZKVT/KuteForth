@@ -133,6 +133,7 @@
 		$filepath;
 		$autorun = false;
 		$verify = false;
+		$silent = false;
 		$debug = false;
 		$dump = false;
 		$done = false;
@@ -155,6 +156,9 @@
 					case "debug":
 						$debug = true;
 						break;
+					case "silent":
+						$silent = true;
+						break;
 					default:
 						echo "[ERROR]: Unrecognized option : " . $arg . "\n";
 						usage($argv[0]);
@@ -175,6 +179,9 @@
 							break;
 						case "b":
 							$debug = true;
+							break;
+						case "s":
+							$silent = true;
 							break;
 						default:
 							echo "[ERROR]: Unrecognized option : " . $arg . "\n";
@@ -197,25 +204,25 @@
 		$tokens = getTokens($filepath);
 		$te = microtime(true);
 		$t = $te - $ts;
-		echo "[INFO]: Separating words took {$t}s\n";
+		if (!$silent) echo "[INFO]: Separating words took {$t}s\n";
 		$total = $t;
 
 		$ts = microtime(true);
 		$inter_repr = getInterRepr($tokens);
 		$te = microtime(true);
 		$t = $te - $ts;
-		echo "[INFO]: Parsing tokens took {$t}s\n";
+		if (!$silent) echo "[INFO]: Parsing tokens took {$t}s\n";
 		$total += $t;
 
 		$ts = microtime(true);
 		typeChecking($inter_repr);
 		$te = microtime(true);
 		$t = $te - $ts;
-		echo "[INFO]: Type-checking took {$t}s\n";
+		if (!$silent) echo "[INFO]: Type-checking took {$t}s\n";
 		$total += $t;
 
 		if ($verify) {
-			echo "No problem has been detected\n";
+			if (!$silent) echo "No problem has been detected\n";
 			exit(0);
 		}
 
@@ -382,12 +389,12 @@
 		if (!$debug) unlink("output.asm");
 		$te = microtime(true);
 		$t = $te - $ts;
-		echo "[INFO]: Generation took {$t}s\n";
+		if (!$silent) echo "[INFO]: Generation took {$t}s\n";
 		$total += $t;
-		echo "[INFO]: Total took {$t}s\n";
+		if (!$silent) echo "[INFO]: Total took {$t}s\n";
 
 		if ($autorun) {
-			echo "[Info]: Running the program\n";
+			if (!$silent) echo "[Info]: Running the program\n";
 			$exit_code = 0;
 			$output = array();
 			exec("./" . $basename . " " . implode(" ", $args), $output, $exit_code);
