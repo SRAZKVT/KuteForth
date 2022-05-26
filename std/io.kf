@@ -10,20 +10,15 @@ end
 func printu int -- void in
 	if 32 alloc_temp_buffer do
 		swap
-		if dup 0 eq do
-			48 plus
-			swap dup rot pwrite8 1 swap prints
-		else
-			1 rot rot
-			swap int 31 plus ptr swap
-			while dup 0 eq not do
-				10 divmod swap 48 plus
-				rot dup rot pwrite8
-				ptrdec swap
-				rot 1 plus rot rot
-			end drop
-			prints
-		end
+		1 rot rot
+		swap int 31 plus ptr dup 48 pwrite8 swap
+		while dup 0 eq not do
+			10 divmod swap 48 plus
+			rot dup rot pwrite8
+			ptrdec swap
+			rot 1 plus rot rot
+		end drop
+		prints
 	else "Allocation failed" prints 1 exit drop drop end
 	32 free_temp_buffer
 end
