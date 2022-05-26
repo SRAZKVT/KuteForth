@@ -1,0 +1,26 @@
+include "std.kf" end
+
+func main void -- void in
+	10 while dup 1 minus swap 0 eq not do
+		dup printu
+		"\n" prints
+	end drop
+
+	if true do
+		"this should print\n" prints
+	end
+
+	if false do
+		"this shouldn't print\n" prints
+	end
+
+	if false do
+		"this shouldn't print\n" prints
+	elif false do
+		"this shouldn't print either\n" prints
+	elif true do
+		"this should print\n" prints
+	else
+		"this should also not print" prints 
+	end
+end
