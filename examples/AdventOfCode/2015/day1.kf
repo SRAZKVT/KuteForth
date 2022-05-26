@@ -1,0 +1,25 @@
+include "std.kf" end
+
+func main void -- void in
+	0777 0 "input.txt" swap over int plus ptr 0 pwrite8 open
+	if dup 0 lt do
+		"Couldn't open the file\n" prints
+		1 exit
+	end
+	if 1 alloc_temp_buffer not do
+		"Failed to allocate a buffer" prints
+		1 exit
+	end
+	swap
+	0 rot rot
+	while over over 1 rot rot read 0 gt do
+		if over pread8 40 eq do
+			rot 1 plus rot rot
+		elif over pread8 41 eq do
+			rot 1 minus rot rot
+		end
+	end drop drop
+	printu
+	"\n" prints
+	1 free_temp_buffer
+end

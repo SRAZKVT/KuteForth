@@ -43,7 +43,13 @@
 	define('KEYWORD_STACK_DUMPER', '???');       iota();
 	define('KEYWORD_MEM_START', 'mem_start');    iota();
 	define('KEYWORD_PWRITE', 'pwrite');          iota();
+	define('KEYWORD_PWRITE32', 'pwrite32');      iota();
+	define('KEYWORD_PWRITE16', 'pwrite16');      iota();
+	define('KEYWORD_PWRITE8', 'pwrite8');        iota();
 	define('KEYWORD_PREAD', 'pread');            iota();
+	define('KEYWORD_PREAD32', 'pread32');        iota();
+	define('KEYWORD_PREAD16', 'pread16');        iota();
+	define('KEYWORD_PREAD8', 'pread8');          iota();
 	define('KEYWORD_ARGC', 'argc');              iota();
 	define('KEYWORD_ARGV', 'argv');              iota();
 	define('KEYWORD_COUNT',                      iota());
@@ -84,7 +90,13 @@
 	define('OP_LEAVE_BLOCK',    iota());
 	define('OP_PUSH_PTR',       iota());
 	define('OP_PWRITE',         iota());
+	define('OP_PWRITE32',       iota());
+	define('OP_PWRITE16',       iota());
+	define('OP_PWRITE8',        iota());
 	define('OP_PREAD',          iota());
+	define('OP_PREAD32',        iota());
+	define('OP_PREAD16',        iota());
+	define('OP_PREAD8' ,        iota());
 	define('OP_CAST',           iota());
 	define('OP_ARGC',           iota());
 	define('OP_ARGV',           iota());
@@ -208,7 +220,7 @@
 		}
 
 
-		if (OP_COUNT != 40) {
+		if (OP_COUNT != 46) {
 			echo "[ERROR]: Unhandled op_codes in dump, there are now " . OP_COUNT . "\n";
 			exit(127);
 		}
@@ -232,8 +244,26 @@
 					case OP_PWRITE:
 						echo "OP_PWRITE\n";
 						break;
+					case OP_PWRITE32:
+						echo "OP_PWRITE\n";
+						break;
+					case OP_PWRITE16:
+						echo "OP_PWRITE16\n";
+						break;
+					case OP_PWRITE8:
+						echo "OP_PWRITE8\n";
+						break;
 					case OP_PREAD:
 						echo "OP_PREAD\n";
+						break;
+					case OP_PREAD32:
+						echo "OP_PREAD32\n";
+						break;
+					case OP_PREAD16:
+						echo "OP_PREAD16\n";
+						break;
+					case OP_PREAD8:
+						echo "OP_PREAD8\n";
 						break;
 					case OP_CALL:
 						echo "OP_CALL : " . $ir->value . "\n";
@@ -491,7 +521,7 @@
 		$in_include = false;
 
 
-		if (KEYWORD_COUNT != 39) {
+		if (KEYWORD_COUNT != 45) {
 			echo "[ERROR]: Unhandled keywords, there are now (in parsing) " . KEYWORD_COUNT . " keywords\n";
 			exit(127);
 		}
@@ -770,8 +800,26 @@
 				case KEYWORD_PWRITE:
 					array_push($inter_repr_comp, new InterRepr(OP_PWRITE, null, $token));
 					break;
+				case KEYWORD_PWRITE32:
+					array_push($inter_repr_comp, new InterRepr(OP_PWRITE32, null, $token));
+					break;
+				case KEYWORD_PWRITE16:
+					array_push($inter_repr_comp, new InterRepr(OP_PWRITE16, null, $token));
+					break;
+				case KEYWORD_PWRITE8:
+					array_push($inter_repr_comp, new InterRepr(OP_PWRITE8, null, $token));
+					break;
 				case KEYWORD_PREAD:
 					array_push($inter_repr_comp, new InterRepr(OP_PREAD, null, $token));
+					break;
+				case KEYWORD_PREAD32:
+					array_push($inter_repr_comp, new InterRepr(OP_PREAD32, null, $token));
+					break;
+				case KEYWORD_PREAD16:
+					array_push($inter_repr_comp, new InterRepr(OP_PREAD16, null, $token));
+					break;
+				case KEYWORD_PREAD8:
+					array_push($inter_repr_comp, new InterRepr(OP_PREAD8, null, $token));
 					break;
 				case KEYWORD_ARGC:
 					array_push($inter_repr_comp, new InterRepr(OP_ARGC, null, $token));
@@ -1031,7 +1079,7 @@
 	* It however doesn't check for syntax errors, as those should be dealt with during the parsing, and the incoming intermediary representation is assumed clean
 	*/
 	function typeChecking($inter_repr) {
-		if (OP_COUNT !== 40) todo("Unhandled op codes in type checking : there is now " . OP_COUNT);
+		if (OP_COUNT !== 46) todo("Unhandled op codes in type checking : there is now " . OP_COUNT);
 		global $functions;
 
 		$mult_body_if = array();
@@ -1115,10 +1163,46 @@
 					$t = array_pop($type_stack);
 					if ($t !== TYPE_PTR) typeCheckError("OP_PWRITE requires a pointer, but instead got a `'" . getHumanReadableTypes(array($t)) . "`", $token->getTokenInformation());
 					break;
+				case OP_PWRITE32:
+					if (sizeof($type_stack) < 2) typeCheckError("Not enough arguments for OP_PWRITE32", $token->getTokenInformation());
+					array_pop($type_stack);
+					$t = array_pop($type_stack);
+					if ($t !== TYPE_PTR) typeCheckError("OP_PWRITE32 requires a pointer, but instead got a `'" . getHumanReadableTypes(array($t)) . "`", $token->getTokenInformation());
+					break;
+				case OP_PWRITE16:
+					if (sizeof($type_stack) < 2) typeCheckError("Not enough arguments for OP_PWRITE16", $token->getTokenInformation());
+					array_pop($type_stack);
+					$t = array_pop($type_stack);
+					if ($t !== TYPE_PTR) typeCheckError("OP_PWRITE16 requires a pointer, but instead got a `'" . getHumanReadableTypes(array($t)) . "`", $token->getTokenInformation());
+					break;
+				case OP_PWRITE8:
+					if (sizeof($type_stack) < 2) typeCheckError("Not enough arguments for OP_PWRITE8", $token->getTokenInformation());
+					array_pop($type_stack);
+					$t = array_pop($type_stack);
+					if ($t !== TYPE_PTR) typeCheckError("OP_PWRITE8 requires a pointer, but instead got a `'" . getHumanReadableTypes(array($t)) . "`", $token->getTokenInformation());
+					break;
 				case OP_PREAD:
 					if (sizeof($type_stack) < 1) typeCheckError("Not enough arguments for OP_PREAD", $token->getTokenInformation());
 					$t = array_pop($type_stack);
 					if ($t !== TYPE_PTR) typeCheckError("OP_PREAD requires a pointer, but instead got a `" . getHumanReadableTypes(array($t)) . "`", $token->getTokenInformation());
+					array_push($type_stack, TYPE_INT);
+					break;
+				case OP_PREAD32:
+					if (sizeof($type_stack) < 1) typeCheckError("Not enough arguments for OP_PREAD32", $token->getTokenInformation());
+					$t = array_pop($type_stack);
+					if ($t !== TYPE_PTR) typeCheckError("OP_PREAD32 requires a pointer, but instead got a `" . getHumanReadableTypes(array($t)) . "`", $token->getTokenInformation());
+					array_push($type_stack, TYPE_INT);
+					break;
+				case OP_PREAD16:
+					if (sizeof($type_stack) < 1) typeCheckError("Not enough arguments for OP_PREAD16", $token->getTokenInformation());
+					$t = array_pop($type_stack);
+					if ($t !== TYPE_PTR) typeCheckError("OP_PREAD16 requires a pointer, but instead got a `" . getHumanReadableTypes(array($t)) . "`", $token->getTokenInformation());
+					array_push($type_stack, TYPE_INT);
+					break;
+				case OP_PREAD8:
+					if (sizeof($type_stack) < 1) typeCheckError("Not enough arguments for OP_PREAD8", $token->getTokenInformation());
+					$t = array_pop($type_stack);
+					if ($t !== TYPE_PTR) typeCheckError("OP_PREAD8 requires a pointer, but instead got a `" . getHumanReadableTypes(array($t)) . "`", $token->getTokenInformation());
 					array_push($type_stack, TYPE_INT);
 					break;
 				case OP_RETURN:
@@ -1371,7 +1455,7 @@
 	function generate($inter_repr) {
 		global $strings;
 
-		if (OP_COUNT != 40) {
+		if (OP_COUNT != 46) {
 			echo "[ERROR]: Unhandled op_code in code generation, there are now " . OP_COUNT . " op_codes\n";
 			exit(127);
 		}
@@ -1438,10 +1522,46 @@
 					fwrite($file, "\tpop rdi\n");
 					fwrite($file, "\tmov [rdi], rax\n");
 					break;
+				case OP_PWRITE32:
+					fwrite($file, "\t;; OP_PWRITE32\n");
+					fwrite($file, "\tpop rax\n");
+					fwrite($file, "\tpop rdi\n");
+					fwrite($file, "\tmov [rdi], eax\n");
+					break;
+				case OP_PWRITE16:
+					fwrite($file, "\t;; OP_PWRITE16\n");
+					fwrite($file, "\tpop rax\n");
+					fwrite($file, "\tpop rdi\n");
+					fwrite($file, "\tmov [rdi], ax\n");
+					break;
+				case OP_PWRITE8:
+					fwrite($file, "\t;; OP_PWRITE8\n");
+					fwrite($file, "\tpop rax\n");
+					fwrite($file, "\tpop rdi\n");
+					fwrite($file, "\tmov [rdi], al\n");
+					break;
 				case OP_PREAD:
 					fwrite($file, "\t;; OP_PREAD\n");
 					fwrite($file, "\tpop rdi\n");
 					fwrite($file, "\tmov rax, [rdi]\n");
+					fwrite($file, "\tpush rax\n");
+					break;
+				case OP_PREAD32:
+					fwrite($file, "\t;; OP_PREAD32\n");
+					fwrite($file, "\tpop rdi\n");
+					fwrite($file, "\tmov eax, [rdi]\n");
+					fwrite($file, "\tpush rax\n");
+					break;
+				case OP_PREAD16:
+					fwrite($file, "\t;; OP_PREAD16\n");
+					fwrite($file, "\tpop rdi\n");
+					fwrite($file, "\tmov ax, [rdi]\n");
+					fwrite($file, "\tpush rax\n");
+					break;
+				case OP_PREAD8:
+					fwrite($file, "\t;; OP_PREAD8\n");
+					fwrite($file, "\tpop rdi\n");
+					fwrite($file, "\tmov al, [rdi]\n");
 					fwrite($file, "\tpush rax\n");
 					break;
 				case OP_CALL:

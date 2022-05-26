@@ -14,17 +14,10 @@ include
 	"bool.kf"
 end
 
+func pwrite64 ptr int -- void in pwrite end
+func pread64  ptr     -- int  in pread  end
+
 func NULL void -- ptr in 0 ptr end
-
-func pread8  ptr -- int in pread 255        andi end
-func pread16 ptr -- int in pread 65535      andi end
-func pread32 ptr -- int in pread 4294967295 andi end
-func pread64 ptr -- int in pread                 end // no need to do an and on this one, at least as long as the target has 64 bits architecture
-
-func pwrite8  ptr int -- void in over pread 18446744073709551360 andi ori pwrite end
-func pwrite16 ptr int -- void in over pread 18446744073709486080 andi ori pwrite end
-func pwrite32 ptr int -- void in over pread 18446744069414584320 andi ori pwrite end
-func pwrite64 ptr int -- void in                                          pwrite end // same as with pread64
 
 func ptreq ptr ptr -- bool in int swap int eq end
 
@@ -41,12 +34,16 @@ int  // amount of bytes to allocate
 ptr  // pointer to begining of allocated memory
 bool // success
 in
-	if dup mem_start pread64 plus 64000 8 minus gt do // if end of memory after allocation would be beyond buffer size, return null ptr and false
+	if dup mem_start pread64 plus 64000 8 minus gt over 0 lt or do // if end of memory after allocation would be beyond buffer size, return null ptr and false
 		drop NULL false
 	else
-		mem_start pread64 8 plus mem_start int plus ptr  // get current pointer to end of memory
-		swap mem_start pread64 plus mem_start swap pwrite64 // add amount of allocated bytes to memory
-		true
+		mem_start pread64 mem_start int plus ptr dup rot           // get current pointer to end of memory
+		while dup 0 eq not do
+			1 minus
+			swap ptrinc
+			dup 0 pwrite8
+			swap
+		end drop drop true
 	end
 end
 
@@ -55,18 +52,9 @@ int  // amount of bytes to deallocate
 --
 void
 in
-	if dup mem_start pread64 swap minus 0 lt do
+	if dup mem_start pread64 swap minus 0 gt not do
 		NULL swap pwrite64 // trying to deallocate memory that wasn't allocated in the first place, segfault
 	else
-		mem_start pread64 8 plus mem_start int plus ptr
-		over mem_start swap over pread64 swap minus pwrite64 // write in head of memory the decreased amount of bytes allocated
-		swap
-		while dup 0 eq not do
-			1 minus
-			swap
-			dup 0 pwrite8
-			ptrdec
-			swap
-		end drop drop
+		dup mem_start swap over pread64 swap minus pwrite64 drop // write in head of memory the decreased amount of bytes allocated
 	end
 end
