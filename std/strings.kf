@@ -12,3 +12,26 @@ func cstr_size ptr -- int in
 end
 
 func cstr_to_str ptr -- int ptr in dup cstr_size swap end
+
+func is_whitespace int -- bool in
+	dup 10 eq
+	swap dup 11 eq rot or
+	swap dup 32 eq rot or
+	swap dup 40 eq rot or
+	swap drop
+end
+
+func trim_whitespace_left 
+int ptr // str
+--
+int ptr // str
+int     // amount of characters trimmed
+in
+	0
+	while over pread8 is_whitespace do
+		1 plus
+		rot 1 minus
+		rot ptrinc
+		rot
+	end
+end
