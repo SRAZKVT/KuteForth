@@ -1,5 +1,8 @@
 include "std.kf" end
 
 func main void -- void in
-	"success" prints
+	"success\n" prints
+	100 printu "\n" prints
+	10000 printu "\n" prints
+	69 printc "\n" prints
 end
