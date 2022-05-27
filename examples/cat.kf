@@ -15,10 +15,15 @@ func read_file ptr -- void in
 	end
 	swap drop
 
-	while dup 1024 swap mem_start swap read dup 0 gt do
-		mem_start prints
+	if 1024 alloc_temp_buffer not do
+		"Failed to allocate buffer\n" prints
+		1 exit
 	end
 
+	while over over swap 1024 rot rot read dup 0 gt do
+		over prints
+	end drop 
+	
 	close
 end
 

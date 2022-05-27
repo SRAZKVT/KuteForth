@@ -1555,18 +1555,21 @@
 					break;
 				case OP_PREAD32:
 					fwrite($file, "\t;; OP_PREAD32\n");
+					fwrite($file, "\tmov rax, 0\n");
 					fwrite($file, "\tpop rdi\n");
 					fwrite($file, "\tmov eax, [rdi]\n");
 					fwrite($file, "\tpush rax\n");
 					break;
 				case OP_PREAD16:
 					fwrite($file, "\t;; OP_PREAD16\n");
+					fwrite($file, "\tmov rax, 0\n");
 					fwrite($file, "\tpop rdi\n");
 					fwrite($file, "\tmov ax, [rdi]\n");
 					fwrite($file, "\tpush rax\n");
 					break;
 				case OP_PREAD8:
 					fwrite($file, "\t;; OP_PREAD8\n");
+					fwrite($file, "\tmov rax, 0\n");
 					fwrite($file, "\tpop rdi\n");
 					fwrite($file, "\tmov al, [rdi]\n");
 					fwrite($file, "\tpush rax\n");
