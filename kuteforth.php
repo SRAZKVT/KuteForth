@@ -672,6 +672,7 @@
 				case KEYWORD_DO:
 					if (!$condition_def) {
 						echo "[COMPILATION ERROR]: Do cannot be called outside of a conditional\n" . $token->getTokenInformation() . "\n";
+						exit(1);
 					}
 					$do_depth++;
 					array_push($inter_repr_comp, new InterRepr(OP_ENTER_BLOCK, BLOCK_DO, $token));
