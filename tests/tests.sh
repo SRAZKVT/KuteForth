@@ -6,7 +6,8 @@ backfolder=$(pwd)
 cd ${testfolder}
 
 for element in *.kf; do
-	../kuteforth.php -sr ${element} > output.txt
+	printf "running test ${element}\n"
+	../kuteforth.php -sr ${element} | tee output.txt
 	basename=$(echo ${element} | cut -f 1 -d '.')
 	cmp -s output.txt ${basename}.txt
 	if [ ${?} -ne 0 ]; then
