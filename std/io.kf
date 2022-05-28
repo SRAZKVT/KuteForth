@@ -30,3 +30,11 @@ func printc int -- void in
 	else "Allocation failed" prints 1 exit drop drop end
 	1 free_temp_buffer
 end
+
+func printb bool -- void in
+	if do
+		"true" prints
+	else
+		"false" prints
+	end
+end
