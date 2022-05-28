@@ -1,0 +1,14 @@
+include "std.kf" end
+
+func mod int int -- int in divmod drop end
+
+func main void -- void in
+	0
+	0
+	while 1 plus dup 1000 lt do
+		if dup 3 mod 0 eq over 5 mod 0 eq or do
+			swap over plus swap
+		end
+	end drop
+	printu
+end
