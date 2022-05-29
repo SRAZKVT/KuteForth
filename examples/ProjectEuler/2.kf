@@ -1,0 +1,26 @@
+include "std.kf" end
+
+func mod int int -- int in divmod drop end
+
+func fibo int -- int in
+	1 plus 0 1
+	while rot 1 minus dup 0 eq not do
+		rot rot
+		swap over plus
+	end
+	drop drop
+end
+
+func main void -- void in
+	0
+	1
+	while 1 plus dup fibo 4000000 lt do
+		dup fibo
+		if dup 2 mod 0 eq do
+			rot plus swap 
+		else
+			drop
+		end
+	end drop
+	printu
+end
