@@ -1007,6 +1007,7 @@
 						echo "[COMPILATION ERROR]:Unescapable character : " . $c . "\n";
 						exit(1);
 					}
+					$escape = false;
 				} else array_push($ret, ord($c));
 			}
 		}
