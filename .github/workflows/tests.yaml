@@ -1,0 +1,15 @@
+name: tests
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  run-tests:
+    runs-on: ghcr.io/void-linux/void-linux:20210220rc01-full-x86_64
+    steps:
+      - run: xbps-install -Sy php nasm
+      - uses: actions/checkout@v3
+      - run: ./tests/tests.sh
