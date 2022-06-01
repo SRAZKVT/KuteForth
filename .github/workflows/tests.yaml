@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: shivammathur/setup-php@v2
-	    with:
+        with:
           php-version: '7.4'
       - uses: ilammy/setup-nasm@v1
         with:
