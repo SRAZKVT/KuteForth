@@ -8,8 +8,13 @@ on:
 
 jobs:
   run-tests:
-    runs-on: ghcr.io/void-linux/void-linux:20210220rc01-full-x86_64
+    runs-on: ubuntu-latest
     steps:
-      - run: xbps-install -Sy php nasm
+      - uses: shivammathur/setup-php@v2
+	    with:
+          php-version: '7.4'
+      - uses: ilammy/setup-nasm@v1
+        with:
+          version: '2.15.05'
       - uses: actions/checkout@v3
       - run: ./tests/tests.sh
