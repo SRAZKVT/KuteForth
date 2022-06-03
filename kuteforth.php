@@ -30,7 +30,7 @@
 	define('KEYWORD_AND_INTEGER', 'andi');       iota();
 	define('KEYWORD_OR_INTEGER', 'ori');         iota();
 	define('KEYWORD_XOR_INTEGER', 'xori');       iota();
-	define('KEYWORD_NOT_INTEGER', 'inv');     iota();
+	define('KEYWORD_NOT_INTEGER', 'noti');       iota();
 	define('KEYWORD_EQ', 'eq');                  iota();
 	define('KEYWORD_LESS_THAN', 'lt');           iota();
 	define('KEYWORD_GREATER_THAN', 'gt');        iota();
