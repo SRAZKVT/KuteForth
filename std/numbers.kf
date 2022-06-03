@@ -1,0 +1,3 @@
+func neg int -- int in
+	inv 1 plus
+end

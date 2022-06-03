@@ -26,6 +26,13 @@ func is_numeral_str int ptr -- bool in
 end
 
 func str_to_int int ptr -- int bool in
+	if dup pread8 45 eq do
+		ptrinc swap 1 minus swap
+		true
+	else
+		false
+	end
+	rot rot
 	if over over is_numeral_str do
 		0
 		while rot dup 0 eq not do
@@ -37,8 +44,11 @@ func str_to_int int ptr -- int bool in
 			swap ptrinc swap
 		end drop swap drop int // TODO: This is an int, but type checking is buggy, and need to cast so that the type checking doesn't complain, but it is an integer. To fix ASAP.
 		true
+	if rot do
+		swap neg swap
+	end
 	else
-		drop drop 0 false
+		drop drop drop 0 false
 	end
 end
 

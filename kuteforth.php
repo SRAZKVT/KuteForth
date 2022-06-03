@@ -29,6 +29,8 @@
 	define('KEYWORD_DIVMOD', 'divmod');          iota();
 	define('KEYWORD_AND_INTEGER', 'andi');       iota();
 	define('KEYWORD_OR_INTEGER', 'ori');         iota();
+	define('KEYWORD_XOR_INTEGER', 'xori');       iota();
+	define('KEYWORD_NOT_INTEGER', 'inv');     iota();
 	define('KEYWORD_EQ', 'eq');                  iota();
 	define('KEYWORD_LESS_THAN', 'lt');           iota();
 	define('KEYWORD_GREATER_THAN', 'gt');        iota();
@@ -74,6 +76,8 @@
 	define('OP_DIVMOD',         iota());
 	define('OP_AND_INTEGER',    iota());
 	define('OP_OR_INTEGER',     iota());
+	define('OP_XOR_INTEGER',    iota());
+	define('OP_NOT_INTEGER', iota());
 	define('OP_EQ',             iota());
 	define('OP_LT',             iota());
 	define('OP_GT',             iota());
@@ -227,7 +231,7 @@
 		}
 
 
-		if (OP_COUNT != 46) {
+		if (OP_COUNT != 48) {
 			echo "[ERROR]: Unhandled op_codes in dump, there are now " . OP_COUNT . "\n";
 			exit(127);
 		}
@@ -322,6 +326,12 @@
 						break;
 					case OP_OR_INTEGER:
 						echo "OP_OR_INTEGER\n";
+						break;
+					case OP_XOR_INTEGER:
+						echo "OP_XOR_INTEGER\n";
+						break;
+					case OP_NOT_INTEGER:
+						echo "OP_NOT_INTEGER\n";
 						break;
 					case OP_EQ:
 						echo "OP_EQ\n";
@@ -528,7 +538,7 @@
 		$in_include = false;
 
 
-		if (KEYWORD_COUNT != 45) {
+		if (KEYWORD_COUNT != 47) {
 			echo "[ERROR]: Unhandled keywords, there are now (in parsing) " . KEYWORD_COUNT . " keywords\n";
 			exit(127);
 		}
@@ -766,6 +776,12 @@
 				case KEYWORD_OR_INTEGER:
 					array_push($inter_repr_comp, new InterRepr(OP_OR_INTEGER, null, $token));
 					break;
+				case KEYWORD_XOR_INTEGER:
+					array_push($inter_repr_comp, new InterRepr(OP_XOR_INTEGER, null, $token));
+					break;
+				case KEYWORD_NOT_INTEGER:
+					array_push($inter_repr_comp, new InterRepr(OP_NOT_INTEGER, null, $token));
+					break;
 				case KEYWORD_EQ:
 					array_push($inter_repr_comp, new InterRepr(OP_EQ, null, $token));
 					break;
@@ -846,7 +862,7 @@
 							exit(1);
 						}
 						if ($in_function) {
-							$value = (int) $token->word;
+							$value = $token->word;
 							array_push($inter_repr_comp, new InterRepr(OP_PUSH_INTEGER, $value, $token));
 						}
 					} else {
@@ -1019,6 +1035,7 @@
 	* Example : "123" will return true ; "foo" will return false
 	*/
 	function isAnInt($val) {
+		if ($val[0] === '-') $val = substr($val, 1);
 		$len = strlen($val);
 		if ($len < 1) return false;
 		return ctype_digit($val);
@@ -1088,7 +1105,7 @@
 	* It however doesn't check for syntax errors, as those should be dealt with during the parsing, and the incoming intermediary representation is assumed clean
 	*/
 	function typeChecking($inter_repr) {
-		if (OP_COUNT !== 46) todo("Unhandled op codes in type checking : there is now " . OP_COUNT);
+		if (OP_COUNT !== 48) todo("Unhandled op codes in type checking : there is now " . OP_COUNT);
 		global $functions;
 
 		$mult_body_if = array();
@@ -1316,6 +1333,19 @@
 					if ($t1 !== TYPE_INT || $t2 !== TYPE_INT) typeCheckError("Unsupported operation with OP_OR_INTEGER : " . getHumanReadableTypes(array($t1, $t2)), $token->getTokenInformation());
 					array_push($type_stack, TYPE_INT);
 					break;
+				case OP_XOR_INTEGER:
+					if (sizeof($type_stack) < 2) typeCheckError("Not enough arguments for OP_XOR_INTEGER", $token->getTokenInformation());
+					$t1 = array_pop($type_stack);
+					$t2 = array_pop($type_stack);
+					if ($t1 !== TYPE_INT || $t2 !== TYPE_INT) typeCheckError("Unsupported operation with OP_XOR_INTEGER : " . getHumanReadableTypes(array($t1, $t2)), $token->getTokenInformation());
+					array_push($type_stack, TYPE_INT);
+					break;
+				case OP_NOT_INTEGER:
+					if (sizeof($type_stack) < 1) typeCheckError("Not enough arguments for OP_NOT_INTEGER", $token->getTokenInformation());
+					$t = array_pop($type_stack);
+					if ($t !== TYPE_INT) typeCheckError("OP_NOT_INTEGER requires an integer");
+					array_push($type_stack, TYPE_INT);
+					break;
 				case OP_EQ:
 					if (sizeof($type_stack) < 2) typeCheckError("Not enough elements to compare with OP_EQ", $token->getTokenInformation());
 					$t1 = array_pop($type_stack);
@@ -1464,7 +1494,7 @@
 	function generate($inter_repr) {
 		global $strings;
 
-		if (OP_COUNT != 46) {
+		if (OP_COUNT != 48) {
 			echo "[ERROR]: Unhandled op_code in code generation, there are now " . OP_COUNT . " op_codes\n";
 			exit(127);
 		}
@@ -1758,6 +1788,19 @@
 					fwrite($file, "\tpop rax\n");
 					fwrite($file, "\tpop rdi\n");
 					fwrite($file, "\tor rax, rdi\n");
+					fwrite($file, "\tpush rax\n");
+					break;
+				case OP_XOR_INTEGER:
+					fwrite($file, "\t;; OP_XOR_INTEGER\n");
+					fwrite($file, "\tpop rax\n");
+					fwrite($file, "\tpop rdi\n");
+					fwrite($file, "\txor rax, rdi\n");
+					fwrite($file, "\tpush rax\n");
+					break;
+				case OP_NOT_INTEGER:
+					fwrite($file, "\t;; OP_NOT_INTEGER\n");
+					fwrite($file, "\tpop rax\n");
+					fwrite($file, "\tnot rax\n");
 					fwrite($file, "\tpush rax\n");
 					break;
 				case OP_DROP:

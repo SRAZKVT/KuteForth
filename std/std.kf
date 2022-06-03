@@ -6,4 +6,5 @@ include
 	"strings.kf"
 	"syscalls.kf"
 	"bool.kf"
+	"numbers.kf"
 end

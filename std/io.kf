@@ -1,13 +1,26 @@
 include
 	"syscalls.kf"
 	"memory.kf"
+	"numbers.kf"
 end
 
-func prints int ptr -- void in
-	1 write drop
-end
+func prints int ptr -- void end
+func fprintc int int -- void end
 
-func printu int -- void in
+func fprints
+int // fd
+int // size
+ptr // buf
+--
+void
+in rot write drop end
+
+func fprintu 
+int // fd
+int // number
+--
+void
+in
 	if 32 alloc_temp_buffer do
 		swap
 		1 rot rot
@@ -18,23 +31,52 @@ func printu int -- void in
 			ptrdec swap
 			rot 1 plus rot rot
 		end drop
-		prints
-	else "Allocation failed" prints 1 exit drop drop end
+		fprints
+	else "Allocation failed" prints 1 exit drop drop drop end
 	32 free_temp_buffer
 end
 
-func printc int -- void in
+func fprinti
+int // fd
+int // number
+--
+void
+in
+	if dup 0 lt do
+		neg
+		over 45 fprintc
+	end
+	fprintu
+end
+
+func fprintc
+int // fd
+int // char
+--
+void
+in
 	if 1 alloc_temp_buffer do
 		dup rot pwrite8
-		1 swap prints
-	else "Allocation failed" prints 1 exit drop drop end
+		1 swap fprints
+	else "Allocation failed" prints 1 exit drop drop drop end
 	1 free_temp_buffer
 end
 
-func printb bool -- void in
+func fprintb
+int  // fd
+bool // value
+--
+void
+in
 	if do
-		"true" prints
+		"true" fprints
 	else
-		"false" prints
+		"false" fprints
 	end
 end
+
+func prints int ptr -- void in 1 rot rot fprints end
+func printb bool    -- void in 1 swap fprintb end
+func printc int     -- void in 1 swap fprintc end
+func printi int     -- void in 1 swap fprinti end
+func printu int     -- void in 1 swap fprintu end
