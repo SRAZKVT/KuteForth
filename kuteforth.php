@@ -6,6 +6,7 @@
 	$constants = array(); // Constants are not implemented yet
 	$strings = array();
 	$files_included = array();
+	$static_memories = array();
 
 	define('KEYWORD_FUNCTION' ,'func');          iota(true);
 	define('KEYWORD_INCLUDE', 'include');        iota();
@@ -43,6 +44,7 @@
 	define('KEYWORD_ROT', 'rot');                iota();
 	define('KEYWORD_OVER', 'over');              iota();
 	define('KEYWORD_STACK_DUMPER', '???');       iota();
+	define('KEYWORD_MEMORY', 'memory');          iota();
 	define('KEYWORD_MEM_START', 'mem_start');    iota();
 	define('KEYWORD_PWRITE', 'pwrite');          iota();
 	define('KEYWORD_PWRITE32', 'pwrite32');      iota();
@@ -515,6 +517,7 @@
 		global $strings;
 		global $implemented_functions;
 		global $files_included;
+		global $static_memories;
 
 		$inter_repr_comp = array();
 
@@ -536,13 +539,30 @@
 		$jmp_nb = 0;
 		$condition_def = false;
 		$in_include = false;
+		$nextint = false;
 
-
-		if (KEYWORD_COUNT != 47) {
+		if (KEYWORD_COUNT != 48) {
 			echo "[ERROR]: Unhandled keywords, there are now (in parsing) " . KEYWORD_COUNT . " keywords\n";
 			exit(127);
 		}
 		foreach ($tokens as $token) {
+			if ($nextint) {
+				if (!isAnInt($token->word)) {
+					echo "[COMPILATION ERROR]: Not an integer after `memory` keyword\n" . $token->getTokenInformation() . "\n";
+					exit(1);
+				}
+				$i = (int) $token->word;
+				if ($i < 1) {
+					echo "[COMPILATION ERROR]: Invalid amount of bytes given to `memory` keyword\n" . $token->getTokenInformation() . "\n";
+					exit(1);
+				}
+				$ir = array_pop($inter_repr_comp);
+				$ir->value = "stmem" . sizeof($static_memories);
+				array_push($static_memories, $i);
+				array_push($inter_repr_comp, $ir);
+				$nextint = false;
+				continue;
+			}
 			switch ($token->word) {
 				case KEYWORD_FUNCTION:
 					if ($in_function || $in_function_definition) {
@@ -820,6 +840,10 @@
 					break;
 				case KEYWORD_MEM_START:
 					array_push($inter_repr_comp, new InterRepr(OP_PUSH_PTR, "static_buffer", $token));
+					break;
+				case KEYWORD_MEMORY:
+					array_push($inter_repr_comp, new InterRepr(OP_PUSH_PTR, null, $token));
+					$nextint = true;
 					break;
 				case KEYWORD_PWRITE:
 					array_push($inter_repr_comp, new InterRepr(OP_PWRITE, null, $token));
@@ -1501,6 +1525,7 @@
 	*/
 	function generate($inter_repr) {
 		global $strings;
+		global $static_memories;
 
 		if (OP_COUNT != 48) {
 			echo "[ERROR]: Unhandled op_code in code generation, there are now " . OP_COUNT . " op_codes\n";
@@ -1517,10 +1542,15 @@
 		fwrite($file, "\tcall_stack: resb " . CALL_STACK_SIZE*8 ."\n");
 		fwrite($file, "\tstatic_buffer: resb " . STATIC_BUFFER_SIZE . "\n");
 		fwrite($file, "\targs: resb 8\n");
+		$i = 0;
+		foreach ($static_memories as $sizes) {
+			fwrite($file, "\tstmem" . $i . ": resb " . $static_memories[$i] . "\n");
+			$i++;
+		}
 		fwrite($file, "section .data\n");
 		$i = 0;
 		foreach ($strings as $str) {
-			fwrite($file, "str" . $i . ": db " . implode(", ", $str) . "\n");
+			fwrite($file, "\tstr" . $i . ": db " . implode(", ", $str) . "\n");
 			$i++;
 		}
 		fclose($file);
