@@ -65,6 +65,14 @@ minus  -> substracts the second number on the stack from the first and pushes th
 mult   -> multiplies the two numbers on top of the stack and pushes the result onto the stack
 
 divmod -> divides the second number on the stack from the first, pushes the quotient at the first place and the remainder at the first place on the stack
+
+andi   -> realise a bitwise and on the two first elements on the stack, and pushes the result
+
+ori    -> realise a bitwise or  on the two first elements on the stack, and pushes the result
+
+xori   -> realise a bitwise xor on the two first elements on the stack, and pushes the result
+
+noti   -> realise a bitwise not on the two first elements on the stack, and pushes the result
 ```
 
 ## Conditions :
@@ -91,7 +99,9 @@ The condition will be reevaluated at each pass, and whenever said condition retu
 
 ## Memory:
 There is currently a static buffer into the compiled programs, of 64kB, of which you can access the begining with `mem_start`. mem_start pushes at the top of the stack a pointer to the begining of that buffer. You can write at a pointer using `<ptr> <value> pwrite`, as well as reading from a pointer with `<ptr> pread`.
+Note : Keywords `pread32`, `pread16`, `pread8`, `pwrite32`, `pwrite16` and  `pwrite8` are 32, 16 and 8 bits versions of the `pread` and `pwrite` operations
 
+It is also possible to create global memory statically, outside of the static buffer, by using `memory <size in bytes>`. For example, `memory 8` will create a 64 bits long memory segment.
 
 ## Stack dumper :
 If at one point you are confused or forget what type of elements are onto the stack, you can use the special keyword `???`, which will stop the compiler whenever encountered, and will print the state of the type stack at that position.
