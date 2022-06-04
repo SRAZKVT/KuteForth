@@ -1115,6 +1115,7 @@
 		$block_stack = array();
 		$function_ret_stack = array();
 		$do_no_save = false;
+		$do_block_context = array();
 
 		foreach ($inter_repr as $ir) {
 			$token = $ir->token;
@@ -1144,7 +1145,13 @@
 						$type_stack = array_pop($saved_type_stack);
 						//todo("type checking for not multi body if implemented yet");
 					} else if ($ir->value === BLOCK_DO) {
-						array_pop($block_stack);
+						$b = array_pop($block_stack);
+						array_push($do_block_context, $b);
+						if ($b === BLOCK_WHILE) {
+							$cpy = $type_stack;
+							array_pop($cpy);
+							array_push($prev_type_stack, $cpy);
+						}
 						array_push($block_stack, BLOCK_DO);
 						if (!$do_no_save) {
 							$sz = sizeof($saved_type_stack);
@@ -1165,6 +1172,7 @@
 						if (!array_pop($mult_body_if)) $prev = array_pop($saved_type_stack);
 						else $prev = array_pop($prev_type_stack);
 						if ($type_stack !== $prev) typeCheckError("Mismatched type stacks, got `" . getHumanReadableTypes($prev) . "` and `" . getHumanReadableTypes($type_stack) . "`", $token->getTokenInformation());
+						if (array_pop($do_block_context) === BLOCK_WHILE) $type_stack = array_pop($prev_type_stack);
 					} else if ($b == BLOCK_MULT_BODY_IF) {
 						// this shouldn't do anything
 					} else {

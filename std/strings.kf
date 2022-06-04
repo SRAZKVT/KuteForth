@@ -1,6 +1,7 @@
 include 
 	"memory.kf"
 	"bool.kf"
+	"numbers.kf"
 end
 
 func cstr_size ptr -- int in
@@ -42,7 +43,7 @@ func str_to_int int ptr -- int bool in
 			over pread8 48 minus
 			plus
 			swap ptrinc swap
-		end drop swap drop int // TODO: This is an int, but type checking is buggy, and need to cast so that the type checking doesn't complain, but it is an integer. To fix ASAP.
+		end drop swap drop
 		true
 	if rot do
 		swap neg swap
