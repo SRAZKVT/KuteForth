@@ -42,10 +42,10 @@
 	define('KEYWORD_DUP', 'dup');                iota();
 	define('KEYWORD_SWAP','swap');               iota();
 	define('KEYWORD_ROT', 'rot');                iota();
+	define('KEYWORD_SAVE', 'save');              iota();
 	define('KEYWORD_OVER', 'over');              iota();
 	define('KEYWORD_STACK_DUMPER', '???');       iota();
 	define('KEYWORD_MEMORY', 'memory');          iota();
-	define('KEYWORD_MEM_START', 'mem_start');    iota();
 	define('KEYWORD_PWRITE', 'pwrite');          iota();
 	define('KEYWORD_PWRITE32', 'pwrite32');      iota();
 	define('KEYWORD_PWRITE16', 'pwrite16');      iota();
@@ -56,6 +56,7 @@
 	define('KEYWORD_PREAD8', 'pread8');          iota();
 	define('KEYWORD_ARGC', 'argc');              iota();
 	define('KEYWORD_ARGV', 'argv');              iota();
+	define('KEYWORD_HERE', 'here');              iota();
 	define('KEYWORD_COUNT',                      iota());
 
 	define('OP_FUNCTION',       iota(true));
@@ -90,6 +91,7 @@
 	define('OP_DUP',            iota());
 	define('OP_SWAP',           iota());
 	define('OP_ROT',            iota());
+	define('OP_SAVE',           iota());
 	define('OP_OVER',           iota());
 	define('OP_STACK_DUMPER',   iota());
 	define('OP_ENTER_BLOCK',    iota());
@@ -233,7 +235,7 @@
 		}
 
 
-		if (OP_COUNT != 48) {
+		if (OP_COUNT != 49) {
 			echo "[ERROR]: Unhandled op_codes in dump, there are now " . OP_COUNT . "\n";
 			exit(127);
 		}
@@ -364,6 +366,9 @@
 						break;
 					case OP_ROT:
 						echo "OP_ROT\n";
+						break;
+					case OP_SAVE:
+						echo "OP_SAVE\n";
 						break;
 					case OP_OVER:
 						echo "OP_OVER\n";
@@ -502,8 +507,12 @@
 			$this->filename = $filename;
 		}
 
+		function getTokenLocation() {
+			return $this->filename . ":" . $this->row . ":" . $this->col;
+		}
+
 		function getTokenInformation() {
-			return $this->filename . ":" . $this->row . ":" . $this->col . " [" . $this->word . "]";
+			return $this->getTokenLocation() . " [" . $this->word . "]";
 		}
 	}
 
@@ -541,7 +550,7 @@
 		$in_include = false;
 		$nextint = false;
 
-		if (KEYWORD_COUNT != 48) {
+		if (KEYWORD_COUNT != 49) {
 			echo "[ERROR]: Unhandled keywords, there are now (in parsing) " . KEYWORD_COUNT . " keywords\n";
 			exit(127);
 		}
@@ -835,11 +844,11 @@
 				case KEYWORD_OVER:
 					array_push($inter_repr_comp, new InterRepr(OP_OVER, null, $token));
 					break;
+				case KEYWORD_SAVE:
+					array_push($inter_repr_comp, new InterRepr(OP_SAVE, null, $token));
+					break;
 				case KEYWORD_STACK_DUMPER:
 					array_push($inter_repr_comp, new InterRepr(OP_STACK_DUMPER, null, $token));
-					break;
-				case KEYWORD_MEM_START:
-					array_push($inter_repr_comp, new InterRepr(OP_PUSH_PTR, "static_buffer", $token));
 					break;
 				case KEYWORD_MEMORY:
 					array_push($inter_repr_comp, new InterRepr(OP_PUSH_PTR, null, $token));
@@ -874,6 +883,13 @@
 					break;
 				case KEYWORD_ARGV:
 					array_push($inter_repr_comp, new InterRepr(OP_ARGV, null, $token));
+					break;
+				case KEYWORD_HERE:
+					$sz = sizeof($strings);
+					$bytes = getBytes($token->getTokenLocation() . ":" . $function_name . ": ");
+					array_push($strings, $bytes);
+					array_push($inter_repr_comp, new InterRepr(OP_PUSH_INTEGER, sizeof($bytes), $token));
+					array_push($inter_repr_comp, new InterRepr(OP_PUSH_PTR, "str" . $sz, $token));
 					break;
 				default:
 					if (isAnInt($token->word)) {
@@ -1129,7 +1145,7 @@
 	* It however doesn't check for syntax errors, as those should be dealt with during the parsing, and the incoming intermediary representation is assumed clean
 	*/
 	function typeChecking($inter_repr) {
-		if (OP_COUNT !== 48) todo("Unhandled op codes in type checking : there is now " . OP_COUNT);
+		if (OP_COUNT !== 49) todo("Unhandled op codes in type checking : there is now " . OP_COUNT);
 		global $functions;
 
 		$mult_body_if = array();
@@ -1452,6 +1468,16 @@
 					array_push($type_stack, $t1);
 					array_push($type_stack, $t2);
 					break;
+				case OP_SAVE:
+					if (sizeof($type_stack) < 3) typeCheckError("Not enough arguments to save for OP_SAVE", $token->getTokenInformation());
+					$t1 = array_pop($type_stack);
+					$t2 = array_pop($type_stack);
+					$t3 = array_pop($type_stack);
+					array_push($type_stack, $t1);
+					array_push($type_stack, $t3);
+					array_push($type_stack, $t2);
+					array_push($type_stack, $t1);
+					break;
 				case OP_CAST:
 					if (sizeof($type_stack) < 1) typeCheckError("Nothing to case by OP_CAST", $token->getTokenInformation());
 					$t = array_pop($type_stack);
@@ -1527,7 +1553,7 @@
 		global $strings;
 		global $static_memories;
 
-		if (OP_COUNT != 48) {
+		if (OP_COUNT != 49) {
 			echo "[ERROR]: Unhandled op_code in code generation, there are now " . OP_COUNT . " op_codes\n";
 			exit(127);
 		}
@@ -1866,6 +1892,16 @@
 					fwrite($file, "\tpush rdi\n");
 					fwrite($file, "\tpush rax\n");
 					fwrite($file, "\tpush rsi\n");
+					break;
+				case OP_SAVE:
+					fwrite($file, "\t;; OP_SAVE\n");
+					fwrite($file, "\tpop rax\n");
+					fwrite($file, "\tpop rdi\n");
+					fwrite($file, "\tpop rsi\n");
+					fwrite($file, "\tpush rax\n");
+					fwrite($file, "\tpush rsi\n");
+					fwrite($file, "\tpush rdi\n");
+					fwrite($file, "\tpush rax\n");
 					break;
 				case OP_OVER:
 					fwrite($file, "\t;; OP_OVER\n");

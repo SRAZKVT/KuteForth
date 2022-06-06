@@ -20,6 +20,7 @@ func pread64  ptr     -- int  in pread  end
 func NULL void -- ptr in 0 ptr end
 
 func ptreq ptr ptr -- bool in int swap int eq end
+func ptrplus ptr int -- ptr in swap int plus ptr end
 
 func ptrinc ptr -- ptr in int 1 plus ptr end
 func ptrdec ptr -- ptr in int 1 minus ptr end
@@ -28,22 +29,28 @@ func ptrdec ptr -- ptr in int 1 minus ptr end
 // The static buffer allocator assumes the first 64 bits of the static buffer to be its counter for the amount of bytes currently in use. DO NOT WRITE THERE
 // If you do, data loss is going to happen.
 
+func mem_start void -- ptr in memory 64000 end
+
+func get_static_buffer_size void -- ptr in memory 8 end
+
 func alloc_temp_buffer
 int  // amount of bytes to allocate
 --
 ptr  // pointer to begining of allocated memory
 bool // success
 in
-	if dup mem_start pread64 plus 64000 8 minus gt over 0 lt or do // if end of memory after allocation would be beyond buffer size, return null ptr and false
+	if dup get_static_buffer_size pread plus 64000 gt over 0 lt or do // if end of memory after allocation would be beyond buffer size, return null ptr and false
 		drop NULL false
 	else
-		mem_start pread64 mem_start int plus ptr dup rot           // get current pointer to end of memory
+		dup
+		mem_start get_static_buffer_size pread ptrplus dup rot
 		while dup 0 eq not do
 			1 minus
 			swap ptrinc
 			dup 0 pwrite8
 			swap
 		end drop drop true
+		rot get_static_buffer_size dup pread rot plus pwrite
 	end
 end
 
@@ -52,9 +59,9 @@ int  // amount of bytes to deallocate
 --
 void
 in
-	if dup mem_start pread64 minus 0 lt do
+	if dup get_static_buffer_size pread swap minus 0 lt do
 		NULL swap pwrite64 // trying to deallocate memory that wasn't allocated in the first place, segfault
 	else
-		dup mem_start swap over pread64 swap minus pwrite64 drop // write in head of memory the decreased amount of bytes allocated
+		dup get_static_buffer_size swap over pread swap minus pwrite drop // write in head of memory the decreased amount of bytes allocated
 	end
 end

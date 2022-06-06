@@ -75,3 +75,17 @@ in
 		rot
 	end
 end
+
+func str_line_size
+int ptr // str
+--
+int     // amount of characters in line
+in
+	0 rot rot
+	while dup pread8 10 eq not do
+		ptrinc
+		rot 1 plus
+		rot 1 minus
+		rot
+	end drop drop
+end

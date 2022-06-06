@@ -32,7 +32,7 @@ in
 			rot 1 plus rot rot
 		end drop
 		fprints
-	else "Allocation failed" prints 1 exit drop drop drop end
+	else here prints "Allocation failed" prints 1 exit drop drop drop end
 	32 free_temp_buffer
 end
 
@@ -58,7 +58,7 @@ in
 	if 1 alloc_temp_buffer do
 		dup rot pwrite8
 		1 swap fprints
-	else "Allocation failed" prints 1 exit drop drop drop end
+	else here prints "Allocation failed" prints 1 exit drop drop drop end
 	1 free_temp_buffer
 end
 
@@ -80,3 +80,16 @@ func printb bool    -- void in 1 swap fprintb end
 func printc int     -- void in 1 swap fprintc end
 func printi int     -- void in 1 swap fprinti end
 func printu int     -- void in 1 swap fprintu end
+
+func get_file_size
+int // fd
+--
+int // size
+in
+	memory 144
+	if dup rot fstat not do
+		here prints "Unable to get file information\n" prints
+		1 exit
+	end
+	48 ptrplus pread
+end

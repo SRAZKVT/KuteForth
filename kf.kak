@@ -9,8 +9,8 @@ addhl shared/kuteforth/comment region '//' '$' fill comment
 addhl shared/kuteforth/code default-region group
 
 addhl shared/kuteforth/code/type regex '\b(?:bool|int|ptr|void)\b' 0:type
-addhl shared/kuteforth/code/stackops regex '\b(?:swap|drop|over|rot|dup)\b' 0:function
-addhl shared/kuteforth/code/keywords regex '\b(?:func|in|end|if|do|else|elif|while|mem_start|pwrite|pwrite32|pwrite16|pwrite8|pread|pread32|pread16|pread8|argc|argv|include)\b' 0:keyword
+addhl shared/kuteforth/code/stackops regex '\b(?:swap|drop|over|rot|dup|save)\b' 0:function
+addhl shared/kuteforth/code/keywords regex '\b(?:func|in|end|if|do|else|elif|while|pwrite|pwrite32|pwrite16|pwrite8|pread|pread32|pread16|pread8|argc|argv|include|here)\b' 0:keyword
 
 hook -group kuteforth-highlight global WinSetOption filetype=kuteforth %{
 	add-highlighter window/kuteforth ref kuteforth

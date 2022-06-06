@@ -1,46 +1,38 @@
-// this is slightly broken and doesn't exactly work as perfectly as cat, but it prints at least one file
-
-include
-	"std.kf"
-end
+include "std.kf" end
 
 func read_file ptr -- void in
-	dup
-	0777 swap 0 swap open
-	if dup 0 lt do
-		"Couldn't open the file `" prints
-		swap dup cstr_to_str prints swap
-		"`\n" prints
+	0777 0 rot open dup
+	if dup -1 eq do
+		here prints "Unable to open file\n" prints
 		1 exit
 	end
-	swap drop
-
-	if 1024 alloc_temp_buffer not do
-		"Failed to allocate buffer\n" prints
+	dup get_file_size dup rot rot
+	if alloc_temp_buffer not do
+		here prints "Unable to allocate memory to hold the file\n" prints
 		1 exit
 	end
-
-	while over over swap 1024 rot rot read dup 0 gt do
-		over prints
-	end drop 
-	
-	close
+	save
+	swap read
+	rot close
+	dup rot
+	prints
+	free_temp_buffer
 end
 
 func main void -- void in
-	0 while dup argc eq not do
-		"arg[" prints dup 48 plus mem_start swap pwrite 1 mem_start prints
-		"] : " prints
-		dup argv cstr_to_str prints "\n" prints
-		1 plus
-	end drop
-
 	while argc 1 eq do
-		80 mem_start 0 read
-		mem_start prints
+		if 2048 alloc_temp_buffer do
+			2048 over 0 read
+			swap prints
+			2048 free_temp_buffer
+		else
+			here prints "Unable to allocate buffer\n" prints
+			1 exit drop
+		end
 	end
 	1 while dup argc gt not do
 		dup argv read_file
 		1 plus
+		if dup argc eq do 0 exit end
 	end drop
 end

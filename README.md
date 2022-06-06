@@ -103,5 +103,8 @@ Note : Keywords `pread32`, `pread16`, `pread8`, `pwrite32`, `pwrite16` and  `pwr
 
 It is also possible to create global memory statically, outside of the static buffer, by using `memory <size in bytes>`. For example, `memory 8` will create a 64 bits long memory segment.
 
+## Arguments:
+Command line arguments are accessible through the keywords `argc` and `argv`. `argc` will push on the stack the amount of arguments given, while argv will consume one integer serving as index of the argument, and push on the stack a pointer to the begining of that argument (for example, `1 argv` will push pointer to the executable invoked)
+
 ## Stack dumper :
 If at one point you are confused or forget what type of elements are onto the stack, you can use the special keyword `???`, which will stop the compiler whenever encountered, and will print the state of the type stack at that position.

@@ -36,6 +36,15 @@ in
 	3 syscall1 drop
 end
 
+func fstat
+ptr // pointer to stat struct
+int // fd
+--
+bool
+in
+	5 syscall2 0 eq
+end
+
 func exit
 int // error_code
 --
