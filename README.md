@@ -52,6 +52,9 @@ A B -> A B A
 
 rot
 A B C -> B C A
+
+save
+A B C -> C A B C
 ```
 
 ## Arithmetics :
