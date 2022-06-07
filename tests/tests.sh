@@ -1,5 +1,7 @@
 failed=0
 
+COMPILER="../kuteforth.php"
+
 testfolder=$(dirname ${0})
 backfolder=$(pwd)
 
@@ -7,7 +9,7 @@ cd ${testfolder}
 
 for element in *.kf; do
 	printf "[TESTS]: running test ${element}\n"
-	../kuteforth.php -sr ${element} | tee output.txt
+	${COMPILER} -sr ${element} | tee output.txt
 	basename=$(echo ${element} | cut -f 1 -d '.')
 	cmp -s output.txt ${basename}.txt
 	if [ ${?} -ne 0 ]; then
