@@ -45,6 +45,14 @@ in
 	5 syscall2 0 eq
 end
 
+func unlink
+ptr // pathname
+--
+int
+in
+	87 syscall1
+end
+
 func exit
 int // error_code
 --

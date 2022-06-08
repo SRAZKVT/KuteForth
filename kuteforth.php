@@ -45,6 +45,7 @@
 	define('KEYWORD_SAVE', 'save');              iota();
 	define('KEYWORD_OVER', 'over');              iota();
 	define('KEYWORD_STACK_DUMPER', '???');       iota();
+	define('KEYWORD_SIZEOF', 'sizeof');          iota();
 	define('KEYWORD_MEMORY', 'memory');          iota();
 	define('KEYWORD_PWRITE', 'pwrite');          iota();
 	define('KEYWORD_PWRITE32', 'pwrite32');      iota();
@@ -548,30 +549,14 @@
 		$jmp_nb = 0;
 		$condition_def = false;
 		$in_include = false;
-		$nextint = false;
 
-		if (KEYWORD_COUNT != 49) {
+		if (KEYWORD_COUNT != 50) {
 			echo "[ERROR]: Unhandled keywords, there are now (in parsing) " . KEYWORD_COUNT . " keywords\n";
 			exit(127);
 		}
-		foreach ($tokens as $token) {
-			if ($nextint) {
-				if (!isAnInt($token->word)) {
-					echo "[COMPILATION ERROR]: Not an integer after `memory` keyword\n" . $token->getTokenInformation() . "\n";
-					exit(1);
-				}
-				$i = (int) $token->word;
-				if ($i < 1) {
-					echo "[COMPILATION ERROR]: Invalid amount of bytes given to `memory` keyword\n" . $token->getTokenInformation() . "\n";
-					exit(1);
-				}
-				$ir = array_pop($inter_repr_comp);
-				$ir->value = "stmem" . sizeof($static_memories);
-				array_push($static_memories, $i);
-				array_push($inter_repr_comp, $ir);
-				$nextint = false;
-				continue;
-			}
+		for ($index = 0; $index < sizeof($tokens);) {
+			$token = $tokens[$index];
+			$index++;
 			switch ($token->word) {
 				case KEYWORD_FUNCTION:
 					if ($in_function || $in_function_definition) {
@@ -850,9 +835,17 @@
 				case KEYWORD_STACK_DUMPER:
 					array_push($inter_repr_comp, new InterRepr(OP_STACK_DUMPER, null, $token));
 					break;
+				case KEYWORD_SIZEOF:
+					$op = array_pop($inter_repr_comp);
+					if ($op->op_code !== OP_CAST) compilationError("`{$token->word}` requires a type", $token);
+					$t = $op->value;
+					array_push($inter_repr_comp, new InterRepr(OP_PUSH_INTEGER, getDefaultTypeSize($t), $token));
+					break;
 				case KEYWORD_MEMORY:
-					array_push($inter_repr_comp, new InterRepr(OP_PUSH_PTR, null, $token));
-					$nextint = true;
+					$op = array_pop($inter_repr_comp);
+					if ($op->op_code !== OP_PUSH_INTEGER) compilationError("`{$token->word}` require an integer evaluation at compile tile", $token);
+					array_push($inter_repr_comp, new InterRepr(OP_PUSH_PTR, "stmem" . sizeof($static_memories), $token));
+					array_push($static_memories, $op->value);
 					break;
 				case KEYWORD_PWRITE:
 					array_push($inter_repr_comp, new InterRepr(OP_PWRITE, null, $token));
@@ -1022,6 +1015,15 @@
 			$this->token = $token;
 			$this->value = $value;
 		}
+	}
+
+	function getDefaultTypeSize($t) {
+		return 64; // TODO: Add support for user added types, for now though it isn't needed as the language isn't able to do that
+	}
+
+	function compilationError($message, $token) {
+		echo "[COMPILATION ERROR]: {$message}\n" . $token->getTokenInformation() . "\n";
+		exit(1);
 	}
 
 	/**

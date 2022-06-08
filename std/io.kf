@@ -86,7 +86,9 @@ int // fd
 --
 int // size
 in
-	memory 144
+	if 144 alloc_temp_buffer not do
+		here prints "Unable to allocate memory" prints
+	end
 	if dup rot fstat not do
 		here prints "Unable to get file information\n" prints
 		1 exit

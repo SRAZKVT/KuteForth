@@ -45,9 +45,9 @@ func str_to_int int ptr -- int bool in
 			swap ptrinc swap
 		end drop swap drop
 		true
-	if rot do
-		swap neg swap
-	end
+		if rot do
+			swap neg swap
+		end
 	else
 		drop drop drop 0 false
 	end

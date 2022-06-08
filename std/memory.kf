@@ -29,9 +29,9 @@ func ptrdec ptr -- ptr in int 1 minus ptr end
 // The static buffer allocator assumes the first 64 bits of the static buffer to be its counter for the amount of bytes currently in use. DO NOT WRITE THERE
 // If you do, data loss is going to happen.
 
-func mem_start void -- ptr in memory 64000 end
+func mem_start void -- ptr in 64000 memory end
 
-func get_static_buffer_size void -- ptr in memory 8 end
+func get_static_buffer_size void -- ptr in 8 memory end
 
 func alloc_temp_buffer
 int  // amount of bytes to allocate
