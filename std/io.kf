@@ -93,5 +93,6 @@ in
 		here prints "Unable to get file information\n" prints
 		1 exit
 	end
+	144 free_temp_buffer
 	48 ptrplus pread
 end

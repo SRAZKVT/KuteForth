@@ -1,22 +1,26 @@
 include "std.kf" end
 
 func read_file ptr -- void in
-	0777 0 rot open dup
+	0777 0 rot open
 	if dup -1 eq do
-		here prints "Unable to open file\n" prints
+		here prints
+		"Unable to open file\n" prints
 		1 exit
 	end
-	dup get_file_size dup rot rot
-	if alloc_temp_buffer not do
-		here prints "Unable to allocate memory to hold the file\n" prints
-		1 exit
-	end
-	save
-	swap read
-	rot close
-	dup rot
-	prints
-	free_temp_buffer
+	dup get_file_size
+	while dup 0 gt do
+		swap
+		dup
+		if 64000 alloc_temp_buffer do
+			save 64000 swap rot read
+			save rot prints
+			rot rot minus
+		else
+			here prints
+			"Allocation failed\n" prints
+			1 exit drop drop end
+		64000 free_temp_buffer
+	end drop close
 end
 
 func main void -- void in
