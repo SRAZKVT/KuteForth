@@ -1,0 +1,34 @@
+include "std.kf" end
+
+func remove_file
+ptr // ptr to cstring of file path
+--
+void
+in
+	dup
+	if 0777 128 rot open dup 0 lt do
+		dup printi
+		dup neg printu
+		here prints "Failed to open file : " prints
+		over cstr_to_str prints
+		"\n" prints
+		1 exit drop
+	else
+		close
+		if dup unlink 0 eq not do
+			here prints "Failed to unlink file : " prints
+			dup cstr_to_str prints
+			"\n" prints
+			1 exit
+		end
+	end
+	drop
+end
+
+func main void -- void in
+	1
+	while dup argc eq not do
+		dup argv remove_file
+		1 plus
+	end drop
+end

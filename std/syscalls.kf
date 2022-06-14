@@ -45,6 +45,10 @@ in
 	5 syscall2 0 eq
 end
 
+func getpid void -- int in
+	39 syscall0
+end
+
 func unlink
 ptr // pathname
 --
