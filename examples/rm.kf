@@ -7,8 +7,6 @@ void
 in
 	dup
 	if 0777 128 rot open dup 0 lt do
-		dup printi
-		dup neg printu
 		here prints "Failed to open file : " prints
 		over cstr_to_str prints
 		"\n" prints
