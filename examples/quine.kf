@@ -1,5 +1,5 @@
 include "std.kf" end
-func quine void -- int ptr in "include \"std.kf\" end\nfunc quine void -- int ptr in \"?\" end\nfunc main void -- void in\n\tquine\n\twhile over 0 eq not do\n\t\tdup pread8\n\t\tif dup 63 eq do\n\t\t\tdrop quine\n\t\t\twhile over 0 eq not do\n\t\t\t\tdup pread8\n\t\t\t\tif dup 34 eq do\n\t\t\t\t\tdrop 92 printc 110 printc\n\t\t\t\telse\n\t\t\t\t\tif dup 10 eq do\n\t\t\t\t\t\tdrop 92 printc 110 printc\n\t\t\t\t\telse\n\t\t\t\t\t\tif dup 9 eq do\n\t\t\t\t\t\t\tdrop 92 printc 116 printc\n\t\t\t\t\t\telse\n\t\t\t\t\t\t\tprintc\n\t\t\t\t\t\tend\n\t\t\t\t\tend\n\t\t\t\tend ptrinc swap 1 minus swap\n\t\t\tend drop drop\n\t\telse\n\t\t\tprintc\n\t\tend ptrinc swap 1 minus swap\n\tend drop drop\nend\n" end
+func quine void -- int ptr in "include \"std.kf\" end\nfunc quine void -- int ptr in \"?\" end\nfunc main void -- void in\n\tquine\n\twhile over 0 eq not do\n\t\tdup pread8\n\t\tif dup 63 eq do\n\t\t\tdrop quine\n\t\t\twhile over 0 eq not do\n\t\t\t\tdup pread8\n\t\t\t\tif dup 34 eq do\n\t\t\t\t\tdrop 92 printc 34 printc\n\t\t\t\telse\n\t\t\t\t\tif dup 10 eq do\n\t\t\t\t\t\tdrop 92 printc 110 printc\n\t\t\t\t\telse\n\t\t\t\t\t\tif dup 9 eq do\n\t\t\t\t\t\t\tdrop 92 printc 116 printc\n\t\t\t\t\t\telse\n\t\t\t\t\t\t\tprintc\n\t\t\t\t\t\tend\n\t\t\t\t\tend\n\t\t\t\tend ptrinc swap 1 minus swap\n\t\t\tend drop drop\n\t\telse\n\t\t\tprintc\n\t\tend ptrinc swap 1 minus swap\n\tend drop drop\nend\n" end
 func main void -- void in
 	quine
 	while over 0 eq not do
@@ -21,7 +21,7 @@ func main void -- void in
 						end
 					end
 				end ptrinc swap 1 minus swap
-			end drop drop 
+			end drop drop
 		else
 			printc
 		end ptrinc swap 1 minus swap
