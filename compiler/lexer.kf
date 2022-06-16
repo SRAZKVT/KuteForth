@@ -1,0 +1,80 @@
+include "std.kf" end
+
+func lex_line int ptr -- void end
+func get_word int ptr -- int ptr int ptr end
+func get_word_size int ptr -- int end
+
+func lex_file
+ptr // cstr to name of file
+--
+void
+in
+	0777 0 1 argv open dup
+	if dup 0 lt do
+		here prints "Unable to open file: " prints
+		rot dup cstr_to_str prints rot rot
+		"\n" prints
+		1 exit
+	end
+	dup get_file_size dup
+	if alloc_temp_buffer do
+		save rot read swap
+		while over 0 gt do
+			get_line lex_line
+		end drop drop
+		close
+	else
+		drop drop drop drop
+		here prints "Allocation failed" prints 1 exit
+	end
+	drop
+end
+
+func lex_line int ptr -- void in
+	while over 0 gt do
+		trim_whitespace_left drop // use this to get location in line of token
+		if dup pread8 47 eq swap ptrinc swap over pread8 47 eq and do
+			swap drop 0 swap
+		else
+			ptrdec
+		end
+		get_word // size of word can be advance location of line to the right location, just get with `over` here
+		if over 0 gt do prints "\n" prints else drop drop end
+	end drop drop
+end
+
+func get_word
+int ptr // str
+--
+int ptr // remaining of the line
+int ptr // seperated word
+in
+	over over get_word_size get_first_n
+end
+
+func get_word_size
+int ptr // str
+--
+int     // size
+in
+	0 rot rot
+	if over 0 gt do
+		while dup pread8 is_whitespace not do
+			if dup pread8 34 eq do
+				ptrinc swap 1 minus swap
+				rot 1 plus rot rot
+				while dup pread8 34 eq not do
+					if dup pread8 92 eq do
+						ptrinc swap 1 minus swap
+						rot 1 plus rot rot
+					end
+					ptrinc swap 1 minus swap
+					rot 1 plus rot rot
+				end
+			end
+			ptrinc swap 1 minus swap
+			rot 1 plus rot rot
+		end
+	end
+	drop drop
+end

@@ -1,0 +1,17 @@
+include "./lexer.kf" end
+
+func usage void -- void in
+	"Usage :: " prints 0 argv cstr_to_str prints " [OPTIONS] <program_name>.kf [EXTRA ARGS]\n" prints
+	"--debug or -b  -> Lets the generated assembly file available for debugging bugs in the code generation\n" prints
+	"--run or -r    -> Automatically runs the program if sucessfuly compiled, with provided arguments\n" prints
+	"--verify or -v -> Simply verifies if the file given is able to compile\n" prints
+	"--dump or -d   -> Dumps intermediary representation of the language\n" prints
+	1 exit
+end
+func main void -- void in
+	if argc 2 lt do
+		usage
+	end
+	// TODO: Add options to compiler
+	1 argv  lex_file
+end

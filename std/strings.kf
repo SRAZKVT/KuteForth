@@ -54,7 +54,8 @@ func str_to_int int ptr -- int bool in
 end
 
 func is_whitespace int -- bool in
-	dup 10 eq
+	dup 9 eq
+	swap dup 10 eq rot or
 	swap dup 11 eq rot or
 	swap dup 32 eq rot or
 	swap dup 40 eq rot or
@@ -88,4 +89,23 @@ in
 		rot 1 minus
 		rot
 	end drop drop
+end
+
+func get_first_n
+int ptr // str
+int     // amount of characters
+--
+int ptr // remaining string
+int ptr // split string
+in
+	rot swap save minus 1 minus rot rot swap over over ptrplus 1 ptrplus rot rot swap
+end
+
+func get_line
+int ptr // str
+--
+int ptr // remaining string
+int ptr // split line
+in
+	over over str_line_size get_first_n
 end

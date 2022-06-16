@@ -7,6 +7,7 @@
 	$strings = array();
 	$files_included = array();
 	$static_memories = array();
+	$currentfolder = array();
 
 	define('KEYWORD_FUNCTION' ,'func');          iota(true);
 	define('KEYWORD_INCLUDE', 'include');        iota();
@@ -427,6 +428,8 @@
 	* This function opens the designated file, parses each word, and returns an array of Tokens.
 	*/
 	function getTokens($filepath) {
+		global $currentfolder;
+		array_push($currentfolder, dirname($filepath));
 		$prev_slash = false;
 		$ret = array();
 		$file = fopen($filepath, "r") or die ("ERROR: Unable to open the file " . $filepath);
@@ -528,6 +531,7 @@
 		global $implemented_functions;
 		global $files_included;
 		global $static_memories;
+		global $currentfolder;
 
 		$inter_repr_comp = array();
 
@@ -967,7 +971,9 @@
 							$path;
 							if (startsWith($str, "./")) {
 								$str = substr($str, 2);
-								$path = realpath($str);
+								$curr = array_pop($currentfolder);
+								array_push($currentfolder, $curr);
+								$path = $curr . "/" . $str;
 							} else if (startsWith($str, "/")) $path = $str;
 							else {
 								$path = __DIR__ . "/std/" . $str;
