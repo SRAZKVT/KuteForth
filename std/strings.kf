@@ -17,7 +17,8 @@ func cstr_to_str ptr -- int ptr in dup cstr_size swap end
 func is_digit int -- bool in dup 47 gt swap 58 lt and end
 
 func is_numeral_str int ptr -- bool in
-	true rot rot
+	if over 0 eq do false else true end
+	rot rot
 	while over 0 eq not do
 		rot over pread8 is_digit and rot rot
 		swap 1 minus swap

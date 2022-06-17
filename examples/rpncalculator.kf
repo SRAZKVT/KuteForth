@@ -1,0 +1,76 @@
+include "std.kf" end
+
+func stack_arr void -- ptr in
+	2112 memory // 32 int sizeof mult 64 plus
+	// first 8 bytes are current top of array, while the following 32 * 8 bytes are the actual content of the stack
+end
+
+func stack_push ptr int -- void in
+	swap
+	if dup pread dup 32 eq do
+		here prints "Stack overflow" prints 1 exit
+	end
+	over over 1 plus pwrite
+	8 mult 8 plus
+	ptrplus swap pwrite
+end
+
+func stack_pop ptr -- int in
+	if dup pread dup 0 eq do
+		here prints "Stack underflow" prints 1 exit
+	end
+	over over 1 minus pwrite
+	8 mult
+	ptrplus pread
+end
+
+func stack_size ptr -- int in
+	pread
+end
+
+func until_next_whitespace int ptr -- int in
+	0 rot rot
+	while over 0 gt over pread8 is_whitespace not and do
+		ptrinc
+		rot 1 plus
+		rot 1 minus
+		rot
+	end drop drop
+end
+
+func main void -- void in
+	if 100 alloc_temp_buffer not do
+		here prints "Failed to allocate memory" prints 1 exit
+	end
+	100 over 0 read swap
+	while over 0 gt do
+		over over until_next_whitespace get_first_n
+		if over over str_to_int do
+			stack_arr swap stack_push drop drop
+		else
+			drop
+			if over 1 gt do
+				here prints "Not a number, but still more than 1 character : " prints over over prints 1 exit
+			end
+			swap drop pread8 dup
+			if dup 43 eq do
+				drop stack_arr dup dup stack_pop swap stack_pop swap plus stack_push
+			elif dup 45 eq do
+				drop stack_arr dup dup stack_pop swap stack_pop swap minus stack_push
+			elif dup 42 eq do
+				drop stack_arr dup dup stack_pop swap stack_pop swap mult stack_push
+			elif dup 47 eq do
+				drop stack_arr dup dup stack_pop swap stack_pop swap divmod swap drop stack_push
+			elif dup 37 eq do
+				drop stack_arr dup dup stack_pop swap stack_pop swap divmod drop stack_push
+			else
+				here prints "Unreachable operation" prints printc 1 exit
+			end drop
+		end
+	end drop drop
+	"There are [" prints stack_arr stack_size printu "] elements on the stack\n" prints
+	while stack_arr stack_size 0 eq not do
+		stack_arr stack_pop printi
+		"\n" prints
+	end
+end
