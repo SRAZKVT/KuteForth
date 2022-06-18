@@ -1,0 +1,125 @@
+include "std.kf" end
+
+func stack_push ptr int -- void in
+	swap
+	if dup pread dup 32 eq do
+		here prints "Stack overflow" prints 1 exit
+	end
+	over over 1 plus pwrite
+	8 mult 8 plus
+	ptrplus swap pwrite
+end
+
+func stack_pop ptr -- int in
+	if dup pread dup 0 eq do
+		here prints "Stack underflow" prints 1 exit
+	end
+	over over 1 minus pwrite
+	8 mult
+	ptrplus pread
+end
+
+func stack_size ptr -- int in pread end
+
+func loop_stack void -- ptr in 4104 memory end
+func loops_array void -- ptr in 32768 memory end
+func loops_array_index void -- ptr in int sizeof memory end // only used to lookup
+func program void -- ptr in 65537 memory end
+func instruction_pointer void -- ptr in int sizeof memory end
+func tape void -- ptr in 65536 memory end
+func memory_pointer void -- ptr in int sizeof memory end
+
+func read_program void -- void in
+	0777 0 1 argv open
+	if dup 0 lt do
+		here prints
+		"Unable to open the file\n" prints
+		1 exit
+	end
+	dup get_file_size
+	if dup 65536 gt do
+		here prints
+		"File too big\n" prints
+		1 exit
+	end
+	swap program swap read drop
+end
+
+func check_loops void -- void in
+	0
+	while program over ptrplus pread8 dup 0 eq not do
+		if dup 91 eq do
+			drop
+			dup loop_stack swap stack_push
+		elif 93 eq do
+			dup
+			loop_stack stack_pop
+			loops_array_index pread
+			16 mult 
+			loops_array swap ptrplus
+			swap over swap pwrite
+			8 ptrplus
+			swap pwrite
+			loops_array_index dup pread 1 plus pwrite
+		end
+		1 plus
+	end drop
+end
+
+func interpret void -- void in
+	while program instruction_pointer pread ptrplus pread8 0 eq not do
+		program instruction_pointer pread ptrplus pread8
+		if   dup 43 eq do // '+'
+			drop tape memory_pointer pread16 ptrplus dup pread8 1 plus pwrite8
+		elif dup 45 eq do // '-'
+			drop tape memory_pointer pread16 ptrplus dup pread8 1 minus pwrite8
+		elif dup 62 eq do // '>'
+			drop memory_pointer dup pread16 1 plus pwrite16
+		elif dup 60 eq do // '<'
+			drop memory_pointer dup pread16 1 minus pwrite16
+		elif dup 46 eq do // '.'
+			drop tape memory_pointer pread16 ptrplus pread8 printc
+		elif dup 44 eq do // ','
+			drop tape memory_pointer pread16 ptrplus 1 swap 0 read drop
+		elif dup 91 eq do // '['
+			drop 
+			if tape memory_pointer pread16 ptrplus pread8 0 eq do
+				0
+				while
+					dup 16 mult loops_array swap ptrplus pread
+					instruction_pointer pread
+					eq not
+				do
+					1 plus
+				end
+				16 mult 8 plus loops_array swap ptrplus pread
+				instruction_pointer swap pwrite
+			end
+		elif dup 93 eq do // ']'
+			drop
+			0
+			while
+				dup 16 mult 8 plus loops_array swap ptrplus pread
+				instruction_pointer pread
+				eq not
+			do
+				1 plus
+			end
+			16 mult loops_array swap ptrplus pread 1 minus
+			instruction_pointer swap pwrite
+		else
+			drop
+		end
+		instruction_pointer dup pread 1 plus pwrite
+	end
+end
+
+func main void -- void in
+	if argc 2 eq not do
+		"Please select one file to interpret\n" prints
+		1 exit
+	end
+	read_program
+	check_loops
+	interpret
+end
