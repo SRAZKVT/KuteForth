@@ -10,17 +10,15 @@
 // 18446744069414584320 : 0xFFFF_FFFF_0000_0000
 // 0                    : 0x0000_0000_0000_0000
 
-include
-	"bool.kf"
-end
+include "bool.kf" "syscalls.kf" end
 
 func pwrite64 ptr int -- void in pwrite end
 func pread64  ptr     -- int  in pread  end
 
 func NULL void -- ptr in 0 ptr end
 
-func ptreq ptr ptr -- bool in int swap int eq end
-func ptrplus ptr int -- ptr in swap int plus ptr end
+func ptrplus ptr int -- ptr in swap int swap plus ptr end
+func ptrminus ptr int -- ptr in swap int swap minus ptr end
 
 func ptrinc ptr -- ptr in int 1 plus ptr end
 func ptrdec ptr -- ptr in int 1 minus ptr end
@@ -64,4 +62,12 @@ in
 	else
 		dup get_static_buffer_size swap over pread swap minus pwrite drop // write in head of memory the decreased amount of bytes allocated
 	end
+end
+
+
+////////////////// MALLOC ////////////////////
+
+func sbrk int -- ptr in
+	NULL brk swap over
+	swap ptrplus brk drop
 end

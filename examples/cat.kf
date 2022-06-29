@@ -3,8 +3,8 @@ include "std.kf" end
 func read_file ptr -- void in
 	0777 0 rot open
 	if dup -1 eq do
-		here prints
-		"Unable to open file\n" prints
+		here eprints
+		"Unable to open file\n" eprints
 		1 exit
 	end
 	dup get_file_size
@@ -16,27 +16,48 @@ func read_file ptr -- void in
 			save rot prints
 			rot rot minus
 		else
-			here prints
-			"Allocation failed\n" prints
+			here eprints
+			"Allocation failed\n" eprints
 			1 exit drop drop end
 		64000 free_temp_buffer
 	end drop close
 end
 
-func main void -- void in
-	while argc 1 eq do
-		if 2048 alloc_temp_buffer do
-			2048 over 0 read
-			swap prints
-			2048 free_temp_buffer
-		else
-			here prints "Unable to allocate buffer\n" prints
-			1 exit drop
-		end
+func read_stdin void -- void in
+	if 2048 alloc_temp_buffer do
+		while 2048 over 0 read dup 0 gt do
+			over
+			prints
+		end drop drop
+	else
+		here eprints "Unable to allocate buffer\n" eprints
+		1 exit drop
 	end
-	1 while dup argc gt not do
-		dup argv read_file
+	2048 free_temp_buffer
+end
+
+func main void -- void in
+	0
+	if
+		if argc 1 gt do
+			1 argv        pread8 45  eq
+			1 argv ptrinc pread8 117 eq
+			and
+		else false end
+	do
 		1 plus
-		if dup argc eq do 0 exit end
+	end // if arg is -u, ignore
+
+	if argc over minus 1 eq do
+		read_stdin 0 exit
+	end
+	1 plus
+	while dup argc eq not do
+		if dup argv pread8 45 eq do
+			read_stdin
+		else
+			dup argv read_file
+		end
+		1 plus
 	end drop
 end

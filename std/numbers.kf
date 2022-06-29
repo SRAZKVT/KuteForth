@@ -1,3 +1,11 @@
 func neg int -- int in
 	noti 1 plus
 end
+
+func div int int -- int in
+	divmod swap drop
+end
+
+func mod int int -- int in
+	divmod drop
+end

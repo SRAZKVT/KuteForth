@@ -76,10 +76,16 @@ in
 end
 
 func prints int ptr -- void in 1 rot rot fprints end
-func printb bool    -- void in 1 swap fprintb end
-func printc int     -- void in 1 swap fprintc end
-func printi int     -- void in 1 swap fprinti end
-func printu int     -- void in 1 swap fprintu end
+func printb bool    -- void in 1 swap    fprintb end
+func printc int     -- void in 1 swap    fprintc end
+func printi int     -- void in 1 swap    fprinti end
+func printu int     -- void in 1 swap    fprintu end
+
+func eprints int ptr -- void in 2 rot rot fprints end
+func eprintb bool    -- void in 2 swap    fprintb end
+func eprintc int     -- void in 2 swap    fprintc end
+func eprinti int     -- void in 2 swap    fprinti end
+func eprintu int     -- void in 2 swap    fprintu end
 
 func get_file_size
 int // fd

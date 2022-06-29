@@ -31,9 +31,7 @@ func str_to_int int ptr -- int bool in
 	if dup pread8 45 eq do
 		ptrinc swap 1 minus swap
 		true
-	else
-		false
-	end
+	else false end
 	rot rot
 	if over over is_numeral_str do
 		0

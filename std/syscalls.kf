@@ -45,6 +45,10 @@ in
 	5 syscall2 0 eq
 end
 
+func brk ptr -- ptr in
+	12 syscall1 ptr
+end
+
 func getpid void -- int in
 	39 syscall0
 end
