@@ -40,9 +40,22 @@ func main void -- void in
 	0
 	if
 		if argc 1 gt do
-			1 argv        pread8 45  eq
-			1 argv ptrinc pread8 117 eq
-			and
+			1 argv
+			cstr_to_str
+			if dup pread8 45 eq do
+				ptrinc swap 1 minus swap
+				while over 0 eq not do
+					if dup pread8 117 eq not do
+						0 argv cstr_to_str eprints
+						": invalid option -- '" eprints
+						dup pread8 eprintc
+						"'\n" eprints
+						1 exit
+					end
+					ptrinc swap 1 minus swap
+				end drop drop
+				true
+			else drop drop false end
 		else false end
 	do
 		1 plus
