@@ -1,3 +1,4 @@
+#!/usr/bin/env sh
 failed=0
 
 COMPILER="../kuteforth.php"

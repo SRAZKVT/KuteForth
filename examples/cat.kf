@@ -2,7 +2,7 @@ include "std.kf" end
 
 func read_file ptr -- void in
 	0777 0 rot open
-	if dup -1 eq do
+	if dup 0 lt do
 		here eprints
 		"Unable to open file\n" eprints
 		1 exit
@@ -38,9 +38,9 @@ end
 
 func main void -- void in
 	0
-	if
+	while
 		if argc 1 gt do
-			1 argv
+			dup 1 plus argv
 			cstr_to_str
 			if dup pread8 45 eq do
 				ptrinc swap 1 minus swap
