@@ -1062,24 +1062,22 @@
 	function getBytes($str) {
 		$ret = array();
 		$chars = str_split($str);
-		$escape = false;
-		foreach ($chars as $c) {
-			if ($c === "\\") {
-				if ($escape) array_push($ret, ord("\\"));
-				else $escape = true;
-			} else {
-				if ($escape) {
-					if ($c === "t") array_push($ret, ord("\t"));
-					else if ($c === "n") array_push($ret, ord("\n"));
-					else if ($c === "\"") array_push($ret, ord("\""));
-					else if ($c === "'") array_push($ret, ord("'"));
-					else {
-						echo "[COMPILATION ERROR]:Unescapable character : " . $c . "\n";
-						exit(1);
-					}
-					$escape = false;
-				} else array_push($ret, ord($c));
+		for ($ci = 0; $ci < sizeof($chars); $ci++) {
+			$c = $chars[$ci];
+			if ($c === '\\') {
+				$c = $chars[$ci + 1];
+				if ($c === '\\') $c = "\\";
+				else if ($c === 't') $c = "\t";
+				else if ($c === 'n') $c = "\n";
+				else if ($c === '"') $c = "\"";
+				else if ($c === '\'') $c = "'";
+				else {
+					echo "[COMPILATION ERROR]: Unescapable character : " . $c . "\n";
+					exit(1);
+				}
+				$ci++;
 			}
+			array_push($ret, ord($c));
 		}
 		return $ret;
 	}
