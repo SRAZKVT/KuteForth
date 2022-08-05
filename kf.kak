@@ -3,10 +3,10 @@ hook global BufCreate .*[.]kf %{
 }
 
 addhl shared/kuteforth regions
-addhl shared/kuteforth/double-string region '"' '"' fill string
-addhl shared/kuteforth/single-string region "'" "'" fill value
-addhl shared/kuteforth/comment region '//' '$' fill comment
 addhl shared/kuteforth/code default-region group
+addhl shared/kuteforth/double_string region %{(?<!\\)(?:\\\\)*\K"} %{(?<!\\)(?:\\\\)*"} fill string
+addhl shared/kuteforth/single_string region %{(?<!\\)(?:\\\\)*\K'} %{(?<!\\)(?:\\\\)*'} fill value
+addhl shared/kuteforth/comment region '//' '$' fill comment
 
 addhl shared/kuteforth/code/type regex '\b(?:bool|int|ptr|void)\b' 0:type
 addhl shared/kuteforth/code/stackops regex '\b(?:swap|drop|over|rot|dup|save)\b' 0:function
