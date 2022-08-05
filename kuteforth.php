@@ -484,7 +484,10 @@
 						$char_place++;
 					}
 				}
-				array_push($ret, new Token($curr_word, $line_place + 1, $char_place + 1, $filepath));
+				array_push($ret, new Token($curr_word,
+					$line_place,
+					$char_place - (strlen($curr_word)) + 1,
+					$filepath));
 			}
 		}
 		fclose($file);
