@@ -42,10 +42,10 @@ func main void -- void in
 		if argc 1 gt do
 			dup 1 plus argv
 			cstr_to_str
-			if dup pread8 45 eq do
+			if dup pread8 '-' eq do
 				ptrinc swap 1 minus swap
 				while over 0 eq not do
-					if dup pread8 117 eq not do
+					if dup pread8 'u' eq not do
 						0 argv cstr_to_str eprints
 						": invalid option -- '" eprints
 						dup pread8 eprintc

@@ -1,29 +1,41 @@
 include "std.kf" end
-func quine void -- int ptr in "include \"std.kf\" end\nfunc quine void -- int ptr in \"?\" end\nfunc main void -- void in\n\tquine\n\twhile over 0 eq not do\n\t\tdup pread8\n\t\tif dup 63 eq do\n\t\t\tdrop quine\n\t\t\twhile over 0 eq not do\n\t\t\t\tdup pread8\n\t\t\t\tif dup 34 eq do\n\t\t\t\t\tdrop 92 printc 34 printc\n\t\t\t\telse\n\t\t\t\t\tif dup 10 eq do\n\t\t\t\t\t\tdrop 92 printc 110 printc\n\t\t\t\t\telse\n\t\t\t\t\t\tif dup 9 eq do\n\t\t\t\t\t\t\tdrop 92 printc 116 printc\n\t\t\t\t\t\telse\n\t\t\t\t\t\t\tprintc\n\t\t\t\t\t\tend\n\t\t\t\t\tend\n\t\t\t\tend ptrinc swap 1 minus swap\n\t\t\tend drop drop\n\t\telse\n\t\t\tprintc\n\t\tend ptrinc swap 1 minus swap\n\tend drop drop\nend\n" end
+
+func quine void -- int ptr in
+	"include \"std.kf\" end\n\nfunc quine void -- int ptr in\n\t\"?\"\nend\n\nfunc main void -- void in\n\tquine\n\twhile over 0 eq not do\n\t\tdup pread8\n\t\tif dup '?' eq rot save 1 ptrminus pread8 '\"' eq and do\n\t\t\tdrop quine\n\t\t\twhile over 0 eq not do\n\t\t\t\tdup pread8\n\t\t\t\tif dup '\\\"' eq do\n\t\t\t\t\tdrop\n\t\t\t\t\t'\\\\' printc\n\t\t\t\t\t'\"'  printc\n\t\t\t\telif dup '\\n' eq do\n\t\t\t\t\tdrop\n\t\t\t\t\t'\\\\' printc\n\t\t\t\t\t'n'  printc\n\t\t\t\telif dup '\\t' eq do\n\t\t\t\t\tdrop\n\t\t\t\t\t'\\\\' printc\n\t\t\t\t\t't'  printc\n\t\t\t\telif dup '\\\\' eq do\n\t\t\t\t\tdrop\n\t\t\t\t\t'\\\\' printc\n\t\t\t\t\t'\\\\' printc\n\t\t\t\telse\n\t\t\t\t\tprintc\n\t\t\t\tend\n\t\t\t\tptrinc swap 1 minus swap\n\t\t\tend drop drop\n\t\telse\n\t\t\tprintc\n\t\tend\n\t\tptrinc swap 1 minus swap\n\tend drop drop\nend"
+end
+
 func main void -- void in
 	quine
 	while over 0 eq not do
 		dup pread8
-		if dup 63 eq do
+		if dup '?' eq rot save 1 ptrminus pread8 '"' eq and do
 			drop quine
 			while over 0 eq not do
 				dup pread8
-				if dup 34 eq do
-					drop 92 printc 34 printc
+				if dup '\"' eq do
+					drop
+					'\\' printc
+					'"'  printc
+				elif dup '\n' eq do
+					drop
+					'\\' printc
+					'n'  printc
+				elif dup '\t' eq do
+					drop
+					'\\' printc
+					't'  printc
+				elif dup '\\' eq do
+					drop
+					'\\' printc
+					'\\' printc
 				else
-					if dup 10 eq do
-						drop 92 printc 110 printc
-					else
-						if dup 9 eq do
-							drop 92 printc 116 printc
-						else
-							printc
-						end
-					end
-				end ptrinc swap 1 minus swap
+					printc
+				end
+				ptrinc swap 1 minus swap
 			end drop drop
 		else
 			printc
-		end ptrinc swap 1 minus swap
+		end
+		ptrinc swap 1 minus swap
 	end drop drop
 end

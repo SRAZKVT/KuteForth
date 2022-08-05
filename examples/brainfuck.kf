@@ -48,10 +48,10 @@ end
 func check_loops void -- void in
 	0
 	while program over ptrplus pread8 dup 0 eq not do
-		if dup 91 eq do
+		if dup '[' eq do
 			drop
 			dup loop_stack swap stack_push
-		elif 93 eq do
+		elif ']' eq do
 			dup
 			loop_stack stack_pop
 			loops_array_index pread
@@ -69,19 +69,19 @@ end
 func interpret void -- void in
 	while program instruction_pointer pread ptrplus pread8 0 eq not do
 		program instruction_pointer pread ptrplus pread8
-		if   dup 43 eq do // '+'
+		if   dup '+' eq do
 			drop tape memory_pointer pread16 ptrplus dup pread8 1 plus pwrite8
-		elif dup 45 eq do // '-'
+		elif dup '-' eq do
 			drop tape memory_pointer pread16 ptrplus dup pread8 1 minus pwrite8
-		elif dup 62 eq do // '>'
+		elif dup '>' eq do
 			drop memory_pointer dup pread16 1 plus pwrite16
-		elif dup 60 eq do // '<'
+		elif dup '<' eq do
 			drop memory_pointer dup pread16 1 minus pwrite16
-		elif dup 46 eq do // '.'
+		elif dup '.' eq do
 			drop tape memory_pointer pread16 ptrplus pread8 printc
-		elif dup 44 eq do // ','
+		elif dup ',' eq do
 			drop tape memory_pointer pread16 ptrplus 1 swap 0 read drop
-		elif dup 91 eq do // '['
+		elif dup '[' eq do
 			drop 
 			if tape memory_pointer pread16 ptrplus pread8 0 eq do
 				0
@@ -95,7 +95,7 @@ func interpret void -- void in
 				16 mult 8 plus loops_array swap ptrplus pread
 				instruction_pointer swap pwrite
 			end
-		elif dup 93 eq do // ']'
+		elif dup ']' eq do
 			drop
 			0
 			while

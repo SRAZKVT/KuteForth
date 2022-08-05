@@ -53,15 +53,15 @@ func main void -- void in
 				here prints "Not a number, but still more than 1 character : " prints over over prints 1 exit
 			end
 			swap drop pread8 dup
-			if dup 43 eq do
+			if dup '+' eq do
 				drop stack_arr dup dup stack_pop swap stack_pop swap plus stack_push
-			elif dup 45 eq do
+			elif dup '-' eq do
 				drop stack_arr dup dup stack_pop swap stack_pop swap minus stack_push
-			elif dup 42 eq do
+			elif dup '*' eq do
 				drop stack_arr dup dup stack_pop swap stack_pop swap mult stack_push
-			elif dup 47 eq do
+			elif dup '/' eq do
 				drop stack_arr dup dup stack_pop swap stack_pop swap divmod swap drop stack_push
-			elif dup 37 eq do
+			elif dup '%' eq do
 				drop stack_arr dup dup stack_pop swap stack_pop swap divmod drop stack_push
 			else
 				here prints "Unreachable operation" prints printc 1 exit

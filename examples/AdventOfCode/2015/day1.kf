@@ -13,9 +13,9 @@ func main void -- void in
 	swap
 	0 rot rot
 	while over over 1 rot rot read 0 gt do
-		if over pread8 40 eq do
+		if over pread8 '(' eq do
 			rot 1 plus rot rot
-		elif over pread8 41 eq do
+		elif over pread8 ')' eq do
 			rot 1 minus rot rot
 		end
 	end drop drop
