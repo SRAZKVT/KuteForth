@@ -430,65 +430,61 @@
 	function getTokens($filepath) {
 		global $currentfolder;
 		array_push($currentfolder, dirname($filepath));
-		$prev_slash = false;
 		$ret = array();
 		$file = fopen($filepath, "r") or die ("ERROR: Unable to open the file " . $filepath);
 		$code = fread($file, filesize($filepath));
 		$lines = explode("\n", $code);
 		$line_place = 0;
-		$count_all_in = false;
 		foreach ($lines as $line) {
-			if ($count_all_in) {
-				echo "[PARSING ERROR]: Unfinished string literal on line " . $line_place . "\n";
-				exit(1);
-			}
-			$prev_slash = false;
 			$line_place++;
-			$char_place = 0;
 			$chars = str_split($line);
-			$current_word = "";
-			$escape = false;
-			foreach ($chars as $c) {
-				$char_place++;
-				if ($c === "\"") {
-					if ($count_all_in) {
-						if (!$escape) $count_all_in = false;
-					} else {
-						$count_all_in = true;
-					}
+			for ($char_place = 0; $char_place < strlen($line); $char_place++) {
+				$curr_word = "";
+				while ($char_place <= strlen($line) && isWhitespace($chars[$char_place])) {
+					$char_place++;
 				}
-				if ($count_all_in) {
-					if ($c === "\\") {
-						if (!$escape) {
-							$escape = true;
-							continue;
+				if ($chars[$char_place] === '"') {
+					$char_place++;
+					$curr_word .= '"';
+					while ($chars[$char_place] !== '"') {
+						if ($char_place >= strlen($line)) {
+							echo "[PARSING ERROR]: Unfinished string literal on line " . $line_place + 1 . "\n";
+							exit(1);
 						}
+						if ($chars[$char_place] == '\\') {
+							$curr_word .= '\\';
+							$char_place++;
+						}
+						$curr_word .= $chars[$char_place];
+						$char_place++;
 					}
-					if ($escape) $current_word = $current_word . "\\";
-					$current_word = $current_word . $c;
-					$escape = false;
-					continue;
-				}
-				if ($c === "/") {
-					if ($prev_slash) {
-						continue 2;
+					$curr_word .= '"';
+				} else if ($chars[$char_place] === "'") {
+					$char_place++;
+					$curr_word .= "'";
+					while ($chars[$char_place] !== "'") {
+						if ($char_place >= strlen($line)) {
+							echo "[PARSING ERROR]: Unfinished character literal on line " . $line_place + 1 . "\n";
+							exit(1);
+						}
+						if ($chars[$char_place] == '\\') {
+							$curr_word .= '\\';
+							$char_place++;
+						}
+						$curr_word .= $chars[$char_place];
+						$char_place++;
 					}
-					$prev_slash = true;
-				} else $prev_slash = false;
-				if (!isWhitespace($c)) {
-					$current_word = $current_word . $c;
+					$curr_word .= "'";
 				} else {
-					if ($current_word !== "") {
-						$token = new Token($current_word, $line_place, $char_place - strlen($current_word), $filepath);
-						array_push($ret, $token);
+					while ($char_place < strlen($line) && !isWhitespace($chars[$char_place])) {
+						if ($chars[$char_place] == '/' && $chars[$char_place + 1] == '/') {
+							continue 3;
+						}
+						$curr_word .= $chars[$char_place];
+						$char_place++;
 					}
-					$current_word = "";
 				}
-			}
-			$char_place++;
-			if ($current_word !== "") {
-				$token = new Token($current_word, $line_place, $char_place - strlen($current_word), $filepath);
-				array_push($ret, $token);
+				array_push($ret, new Token($curr_word, $line_place + 1, $char_place + 1, $filepath));
 			}
 		}
 		fclose($file);
@@ -957,6 +953,12 @@
 								array_push($strings, $bytes);
 								array_push($inter_repr_comp, new InterRepr(OP_PUSH_INTEGER, sizeof($bytes), $token));
 								array_push($inter_repr_comp, new InterRepr(OP_PUSH_PTR, "str" . $sz, $token));
+							} else if (startsWith($token->word, "'")) {
+								$str = substr($token->word, 1);
+								$str = substr($str, 0, -1);
+								$bytes = getBytes($str);
+								if (sizeof($bytes) != 1) compilationError("A character literal can only have contain one character", $token);
+								array_push($inter_repr_comp, new InterRepr(OP_PUSH_INTEGER, $bytes[0], $token));
 							} else {
 								echo "[COMPILATION ERROR]: Unknown word\n" . $token->getTokenInformation() . "\n";
 								exit(1);
@@ -1067,6 +1069,7 @@
 					if ($c === "t") array_push($ret, ord("\t"));
 					else if ($c === "n") array_push($ret, ord("\n"));
 					else if ($c === "\"") array_push($ret, ord("\""));
+					else if ($c === "'") array_push($ret, ord("'"));
 					else {
 						echo "[COMPILATION ERROR]:Unescapable character : " . $c . "\n";
 						exit(1);
