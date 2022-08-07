@@ -9,3 +9,11 @@ end
 func mod int int -- int in
 	divmod drop
 end
+
+func dec int -- int in
+	1 minus
+end
+
+func inc int -- int in
+	1 plus
+end

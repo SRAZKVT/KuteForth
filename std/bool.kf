@@ -1,2 +1,5 @@
 func true  void -- bool in 1 bool end
 func false void -- bool in 0 bool end
+
+func lteq int int -- bool in over over lt rot rot eq or end
+func gteq int int -- bool in over over gt rot rot eq or end

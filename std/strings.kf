@@ -14,7 +14,7 @@ end
 
 func cstr_to_str ptr -- int ptr in dup cstr_size swap end
 
-func is_digit int -- bool in dup 47 gt swap 58 lt and end
+func is_digit int -- bool in dup '0' gteq swap '9' lteq and end
 
 func is_numeral_str int ptr -- bool in
 	if over 0 eq do false else true end
@@ -28,7 +28,7 @@ func is_numeral_str int ptr -- bool in
 end
 
 func str_to_int int ptr -- int bool in
-	if dup pread8 45 eq do
+	if dup pread8 '-' eq do
 		ptrinc swap 1 minus swap
 		true
 	else false end
@@ -39,7 +39,7 @@ func str_to_int int ptr -- int bool in
 			1 minus
 			rot rot
 			10 mult
-			over pread8 48 minus
+			over pread8 '0' minus
 			plus
 			swap ptrinc swap
 		end drop swap drop
@@ -53,11 +53,9 @@ func str_to_int int ptr -- int bool in
 end
 
 func is_whitespace int -- bool in
-	dup 9 eq
-	swap dup 10 eq rot or
-	swap dup 11 eq rot or
-	swap dup 32 eq rot or
-	swap dup 40 eq rot or
+	dup      '\t' eq
+	swap dup '\n' eq rot or
+	swap dup ' '  eq rot or
 	swap drop
 end
 
@@ -82,7 +80,7 @@ int ptr // str
 int     // amount of characters in line
 in
 	0 rot rot
-	while dup pread8 10 eq not do
+	while dup pread8 '\n' eq not do
 		ptrinc
 		rot 1 plus
 		rot 1 minus

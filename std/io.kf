@@ -26,7 +26,7 @@ in
 		1 rot rot
 		swap int 31 plus ptr dup 48 pwrite8 swap
 		while dup 0 eq not do
-			10 divmod swap 48 plus
+			10 divmod swap '0' plus
 			rot dup rot pwrite8
 			ptrdec swap
 			rot 1 plus rot rot
@@ -44,7 +44,7 @@ void
 in
 	if dup 0 lt do
 		neg
-		over 45 fprintc
+		over '-' fprintc
 	end
 	fprintu
 end
