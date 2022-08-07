@@ -1,0 +1,14 @@
+include "std.kf" end
+
+func main void -- void in
+	"5 is smaller or equal than 5: " prints 5 5 lteq printb '\n' printc
+	"5 is smaller or equal than 4: " prints 5 4 lteq printb '\n' printc
+	"4 is smaller or equal than 5: " prints 4 5 lteq printb '\n' printc
+	"5 is smaller than 4: "          prints 5 4 lt   printb '\n' printc
+	"4 is smaller than 5: "          prints 4 5 lt   printb '\n' printc
+	"5 is greater or equal than 5: " prints 5 5 gteq printb '\n' printc
+	"5 is greater or equal than 4: " prints 5 4 gteq printb '\n' printc
+	"4 is greater or equal than 5: " prints 4 5 gteq printb '\n' printc
+	"5 is greater than 4: "          prints 5 4 gt   printb '\n' printc
+	"4 is greater than 5: "          prints 4 5 gt   printb '\n' printc
+end
