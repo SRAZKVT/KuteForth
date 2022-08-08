@@ -440,9 +440,10 @@
 			$chars = str_split($line);
 			for ($char_place = 0; $char_place < strlen($line); $char_place++) {
 				$curr_word = "";
-				while ($char_place <= strlen($line) && isWhitespace($chars[$char_place])) {
+				while ($char_place < strlen($line) && isWhitespace($chars[$char_place])) {
 					$char_place++;
 				}
+				if ($char_place >= strlen($line)) continue 1;
 				if ($chars[$char_place] === '"') {
 					$char_place++;
 					$curr_word .= '"';
