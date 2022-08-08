@@ -1,7 +1,5 @@
 include "std.kf" end
 
-func mod int int -- int in divmod drop end
-
 func fibo int -- int in
 	1 plus 0 1
 	while rot 1 minus dup 0 eq not do

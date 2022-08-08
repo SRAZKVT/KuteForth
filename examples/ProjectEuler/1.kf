@@ -1,7 +1,5 @@
 include "std.kf" end
 
-func mod int int -- int in divmod drop end
-
 func main void -- void in
 	0
 	0
