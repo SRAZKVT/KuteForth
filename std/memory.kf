@@ -10,7 +10,7 @@
 // 18446744069414584320 : 0xFFFF_FFFF_0000_0000
 // 0                    : 0x0000_0000_0000_0000
 
-include "bool.kf" "syscalls.kf" end
+include "bool.kf" "syscalls.kf" "numbers.kf" end
 
 func pwrite64 ptr int -- void in pwrite end
 func pread64  ptr     -- int  in pread  end
@@ -70,4 +70,21 @@ end
 func sbrk int -- ptr in
 	NULL brk swap over
 	swap ptrplus brk drop
+end
+
+// The current implementation of malloc and free do not allow reusing the same memory adresses multiple times.
+// These functions are only present currently to later be replaced more easily with an actually functional version of malloc and free.
+
+// The memory allocated by malloc should always be set to 0, before being handed back to the user
+func malloc int -- ptr in
+	dup
+	sbrk
+	while over 0 gt do
+		dup 0 pwrite8
+		swap dec swap
+	end swap drop
+end
+
+func free ptr -- void in
+	drop
 end

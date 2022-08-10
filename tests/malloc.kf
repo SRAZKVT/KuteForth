@@ -1,0 +1,11 @@
+include "std.kf" end
+
+func main void -- void in
+	"Malloc should always return an adress to memory that is initialized to 0\n" prints
+	4096
+	dup malloc
+	while over 0 gt do
+		dup pread8 printu
+		swap dec swap
+	end free drop
+end
