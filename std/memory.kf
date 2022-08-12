@@ -79,10 +79,12 @@ end
 func malloc int -- ptr in
 	dup
 	sbrk
+	swap over
 	while over 0 gt do
 		dup 0 pwrite8
 		swap dec swap
-	end swap drop
+		ptrinc
+	end drop drop
 end
 
 func free ptr -- void in

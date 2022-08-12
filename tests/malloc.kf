@@ -7,5 +7,6 @@ func main void -- void in
 	while over 0 gt do
 		dup pread8 printu
 		swap dec swap
+		ptrinc
 	end free drop
 end
