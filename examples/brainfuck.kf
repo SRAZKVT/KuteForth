@@ -3,7 +3,7 @@ include "std.kf" end
 func stack_push ptr int -- void in
 	swap
 	if dup pread dup 32 eq do
-		here prints "Stack overflow" prints 1 exit
+		here eprints "Stack overflow" eprints 1 exit
 	end
 	over over 1 plus pwrite
 	8 mult 8 plus
@@ -12,7 +12,7 @@ end
 
 func stack_pop ptr -- int in
 	if dup pread dup 0 eq do
-		here prints "Stack underflow" prints 1 exit
+		here eprints "Stack underflow" eprints 1 exit
 	end
 	over over 1 minus pwrite
 	8 mult
@@ -32,17 +32,29 @@ func memory_pointer void -- ptr in int sizeof memory end
 func read_program void -- void in
 	0777 0 1 argv open
 	if dup 0 lt do
-		here prints
-		"Unable to open the file\n" prints
+		here eprints
+		"Unable to open the file\n" eprints
 		1 exit
 	end
 	dup get_file_size
 	if dup 65536 gt do
-		here prints
-		"File too big\n" prints
+		here eprints
+		"File too big\n" eprints
 		1 exit
 	end
 	swap program swap read drop
+end
+
+func read_program_stdin void -- void in
+	65536 program 0 read
+	if 65536 eq do
+		1 program 0 read
+		if 0 eq not do
+			here eprints
+			"Program too big\n" eprints
+			1 exit
+		end
+	end
 end
 
 func check_loops void -- void in
@@ -115,11 +127,14 @@ func interpret void -- void in
 end
 
 func main void -- void in
-	if argc 2 eq not do
-		"Please select one file to interpret\n" prints
+	if argc 2 gt do
+		"Please select only one file to interpret\n" eprints
 		1 exit
+	elif argc 1 eq do
+		read_program_stdin
+	else
+		read_program
 	end
-	read_program
 	check_loops
 	interpret
 end
