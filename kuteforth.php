@@ -147,6 +147,7 @@
 		$debug = false;
 		$dump = false;
 		$done = false;
+		$cleanup = false;
 
 		$args = array();
 
@@ -168,6 +169,9 @@
 						break;
 					case "silent":
 						$silent = true;
+						break;
+					case "cleanup":
+						$cleanup = true;
 						break;
 					default:
 						echo "[ERROR]: Unrecognized option : " . $arg . "\n";
@@ -192,6 +196,9 @@
 							break;
 						case "s":
 							$silent = true;
+							break;
+						case "c":
+							$cleanup = true;
 							break;
 						default:
 							echo "[ERROR]: Unrecognized option : " . $arg . "\n";
@@ -420,6 +427,7 @@
 			foreach ($output as $line) {
 				echo $line . "\n";
 			}
+			if ($cleanup) unlink($basename);
 			exit($exit_code);
 		}
 	}
@@ -437,6 +445,8 @@
 		$line_place = 0;
 		foreach ($lines as $line) {
 			$line_place++;
+			if ($line_place === 1 && startsWith($line, "#!"))
+				continue; // shebang
 			$chars = str_split($line);
 			for ($char_place = 0; $char_place < strlen($line); $char_place++) {
 				$curr_word = "";
@@ -1972,9 +1982,10 @@
 	*/
 	function usage($invoke) {
 		echo "Usage :: " . $invoke . " [OPTIONS] <program_name>.kf [EXTRA ARGS]\n";
-		echo "--debug or -b  -> Lets the generated assembly file available for debugging bugs in the code generation\n";
-		echo "--run or -r    -> Automatically runs the program if sucessfuly compiled, with provided arguments\n";
-		echo "--verify or -v -> Simply verifies if the file given is able to compile\n";
-		echo "--dump or -d   -> Dumps intermediary representation of the language\n";
+		echo "--debug or -b   -> Lets the generated assembly file available for debugging bugs in the code generation\n";
+		echo "--run or -r     -> Automatically runs the program if sucessfuly compiled, with provided arguments\n";
+		echo "--verify or -v  -> Simply verifies if the file given is able to compile\n";
+		echo "--dump or -d    -> Dumps intermediary representation of the language\n";
+		echo "--cleanup or -c -> Removes the binary file after it is run (only effective coupled with run option)\n";
 	}
 ?>
