@@ -12,6 +12,33 @@ func cstr_size ptr -- int in
 	end drop
 end
 
+func str_pack int ptr -- ptr in
+	16 malloc save
+	8 ptrplus swap pwrite // ptr of str
+	over swap pwrite      // length of str
+end
+
+func str_unpack ptr -- int ptr in
+	dup pread                    // length of str
+	swap dup 8 ptrplus pread ptr // ptr of str
+	swap free
+end
+
+func str_equals int ptr int ptr -- bool in
+	str_pack
+	rot rot
+	str_pack
+	over over
+	pread swap pread
+	if eq do
+		// TODO: Check when two strings have identical length
+		drop drop
+		true
+	else 
+		drop drop false
+	end
+end
+
 func cstr_to_str ptr -- int ptr in dup cstr_size swap end
 
 func is_digit int -- bool in dup '0' gteq swap '9' lteq and end

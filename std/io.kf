@@ -93,12 +93,23 @@ int // fd
 int // size
 in
 	if 144 alloc_temp_buffer not do
-		here prints "Unable to allocate memory" prints
+		here prints "Unable to allocate memory" eprints
 	end
 	if dup rot fstat not do
-		here prints "Unable to get file information\n" prints
+		here prints "Unable to get file information\n" eprints
 		1 exit
 	end
 	144 free_temp_buffer
 	48 ptrplus pread
+end
+
+// AOC SPECIFIC
+
+func get_content_of_input void -- int ptr in
+	0777 0 1 argv open
+	if dup 0 lt do
+		"Unable to open file\n" eprints
+		1 exit
+	end
+	dup get_file_size dup malloc save rot read swap
 end
