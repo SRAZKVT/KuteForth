@@ -1371,7 +1371,7 @@
 					$t1 = array_pop($type_stack);
 					$t2 = array_pop($type_stack);
 					if ($t1 == TYPE_INT && $t2 == TYPE_INT) array_push($type_stack, TYPE_INT);
-					else typeCheckError("Unsupported operation with OP_PLUS : " . getHumanReadableTypes(array($t1, $t2)), $token->getTokenInformation());
+					else typeCheckError("Unsupported operation with OP_MINUS : " . getHumanReadableTypes(array($t1, $t2)), $token->getTokenInformation());
 					break;
 				case OP_MULT:
 					if (sizeof($type_stack) < 2) typeCheckError("Not enough arguments for OP_MULT", $token->getTokenInformation());
