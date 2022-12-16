@@ -1,5 +1,19 @@
 # KuteForth
 
+## IMPORTANT :
+### This language is currently archived, and served as an experiment on writing a basic language. Although this language was small, we found several problems in it and how they could be solved.
+
+- The compiler backend in this language was completely custom, using the nasm assembler. Nasm is very nice if you are writing assembly by hand, however, it isn't great in case of machine generated assembly. Due to using nasm, debug information isn't available, and we cannot use tools such as gdb or lldb, unless we are working on the assembly itself.
+- The stack dumper is helpful in case we are stuck. However, extra type information (just a kind of comment attached to the type itself) would be useful, as cases where we have 3 pointers and need to manipulate them aren't uncommon, and aren't easy to deal with either with minimum information
+- Compile time evaluation would be useful, here specifically for example for memory plages. Since the memory plage is defined at compile time, the size also needs to be evaluated at compile time.
+- Ability to call to the c library would free developpers from reimplementing everything, and opens the door to other operating systems, as currently, of the main operating systems (Windows, MacOS, Linux, FreeBSD, OpenBSD), only Linux allows syscalls outside of the c library
+- While constants aren't an absolute necessity, they are definitely a nice feature to have
+- Imports by including a file aren't ideal, as they are prone to breakage in case of circular dependencies.
+- Custom type structures need to currently have size and layout memorized, or checked whenever reused, which is highly inconvenient by itself. We could call from labels on a structure, and the compiler does the pointer arithmetic for us.
+- Custom types would be useful as well (for example, file descriptors could be a different type, which would make working with files a bit easier), as well as making the stack dumper more useful as it would have more information.
+
+## Original README :
+
 This is a small programming language i am developping on my free time, to experiment with different kind of features programming languages can have.
 
 
